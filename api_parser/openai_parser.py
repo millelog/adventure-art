@@ -39,8 +39,10 @@ class OpenAIParser:
         response_message = response['choices'][0]['message']
 
         if response_message.get('function_call'):
-            # Extract the generated prompt from the function response content
-            generated_prompt = response_message['function_call']['arguments']['image_prompt']
+            # Parse arguments from a JSON string to a dictionary
+            arguments = json.loads(response_message['function_call']['arguments'])
+            # Extract the generated prompt from the arguments dictionary
+            generated_prompt = arguments['image_prompt']
             return generated_prompt
         else:
             # Handle cases where the function call did not produce the expected output
