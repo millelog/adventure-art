@@ -1,16 +1,16 @@
-# input/audio_capture.py
-
 import pyaudio
 import wave
 import os
 import tempfile
+import random
 
 # Import the configuration from settings.py
 from config import AUDIO_SAMPLE_RATE, AUDIO_CHANNELS, AUDIO_FORMAT
 
 
 class AudioCapture:
-    def __init__(self):
+    def __init__(self, debug=False):
+        self.debug = debug
         self.audio = pyaudio.PyAudio()
 
         self.chunk_size = 1024
@@ -23,6 +23,10 @@ class AudioCapture:
         Returns:
             str: Path to the temporary file where the audio is saved.
         """
+
+        if self.debug:
+            print("Debug mode active: Randomly selecting a pre-recorded file...")
+            return self.select_random_file()
 
         # Create a stream for audio capture
         stream = self.audio.open(format=self.format, channels=AUDIO_CHANNELS,
@@ -56,6 +60,19 @@ class AudioCapture:
             wf.writeframes(b''.join(frames))
 
         return file_path
+
+    def select_random_file(self) -> str:
+        """
+        Randomly selects a pre-recorded WAV file from the dnd_sample folder.
+
+        Returns:
+            str: Path to the randomly selected WAV file.
+        """
+        chunk_files = [f for f in os.listdir("dnd_sample") if f.endswith(".wav")]
+        if not chunk_files:
+            raise FileNotFoundError("No WAV files found in the dnd_sample folder")
+        selected_file = random.choice(chunk_files)
+        return os.path.join("dnd_sample", selected_file)
 
     def close(self):
         """

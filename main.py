@@ -13,7 +13,7 @@ from api_parser.openai_parser import OpenAIParser
 
 def main():
     # 1. Capture audio
-    capturer = AudioCapture()
+    capturer = AudioCapture(debug=True)
     audio_file_path = capturer.capture_audio(30)  # Capture for 5 seconds as an example
     capturer.close()
     print(f"Audio captured and saved to {audio_file_path}")
