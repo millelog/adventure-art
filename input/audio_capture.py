@@ -1,4 +1,4 @@
-# audio_capture.py
+# input/audio_capture.py
 
 import pyaudio
 import wave

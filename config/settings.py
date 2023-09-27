@@ -1,4 +1,4 @@
-# settings.py
+# config/settings.py
 
 import os
 

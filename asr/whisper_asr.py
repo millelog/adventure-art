@@ -1,6 +1,7 @@
-# whisper_asr.py
+# asr/whisper_asr.py
 
 import whisper
+import torch
 
 
 class WhisperASR:
@@ -8,7 +9,8 @@ class WhisperASR:
         """
         Initialize the Whisper ASR model.
         """
-        self.model = whisper.load_model(model_path)
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.model = whisper.load_model(model_path).to(device)
 
     def transcribe(self, audio_file_path: str) -> str:
         """
