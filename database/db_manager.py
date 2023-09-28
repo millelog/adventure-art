@@ -1,7 +1,6 @@
 #database/db_manager.py
 from datetime import datetime
 from database.models import Base, Character, Scene, SceneCharacter, Narrative, CharacterDescriptor
-from nlp.summarization import Summarization
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -32,19 +31,11 @@ class DatabaseManager:
         return character
 
     # The summarize_scene function
-    def summarize_scene(scene):
-        # Call the summarization module to generate a summary for the scene
-        # Assume summarize is a function in the summarization module
-        summary = Summarization.summarize(scene)
-        return summary
     def create_new_scene(self, scene_description, characters_present, characters_descriptors):
         # End the current scene
         ended_scene = self.end_current_scene()
 
-        # Summarize the ended scene
-        if ended_scene:
-            summary = self.summarize_scene(ended_scene)
-            self.add_narrative(summary, ended_scene)  # Assume timestamp is handled within add_narrative
+
 
         # Create a new scene
         new_scene = Scene(title=scene_description, summary=scene_description, is_active=True)

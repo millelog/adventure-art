@@ -1,2 +1,2 @@
-from .models import Character, Scene, SceneCharacter, Narrative
+from .models import Base, Character, Scene, SceneCharacter, Narrative, CharacterDescriptor
 from .db_manager import DatabaseManager

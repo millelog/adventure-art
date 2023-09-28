@@ -3,10 +3,10 @@ import openai
 import json
 from database import DatabaseManager
 from database.models import Base, Character, Scene, SceneCharacter, Narrative, CharacterDescriptor
-
-
-class Summarization:
+from config.settings import OPENAI_API_KEY
+class Summarizer:
     def __init__(self):
+        openai.api_key = OPENAI_API_KEY
         self.db_manager = DatabaseManager()
 
     def summarize_scene(self, scene_id):
@@ -46,6 +46,6 @@ class Summarization:
 
 
 if __name__ == "__main__":
-    summarizer = Summarization()
+    summarizer = Summarizer()
     summarized_narrative = summarizer.summarize_scene(scene_id=1)
     print(summarized_narrative.summary)

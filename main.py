@@ -1,18 +1,17 @@
 import os
 from dotenv import load_dotenv
-import random
-import glob
 
 # Load environment variables from .env file
 load_dotenv()
 
+import random
+import glob
 from input.audio_capture import AudioCapture
 from asr.whisper_asr import WhisperASR
 from api_parser.openai_parser import OpenAIParser
-from nlp.named_entity_recognition import identify_named_entities
-from nlp.scene_understanding import process_scene_text
-from database import DatabaseManager
-
+from nlp.named_entity_recognition import named_entity_recognizer
+from nlp.scene_understanding import scene_processor
+from config.settings import OPENAI_API_KEY
 
 # Import the image generation and GUI modules when they are available
 # from image_generator.text_to_image import TextToImage
@@ -20,12 +19,17 @@ from database import DatabaseManager
 
 def main():
     # Initialize Database Manager
-    db_manager = DatabaseManager()
+    print(OPENAI_API_KEY)
+    current_scene = None
+    scene_processor_instance = scene_processor()
+    named_entity_recognizer_instance = named_entity_recognizer()
+    parser_instance = OpenAIParser()
+
 
     debug = True  # Set debug mode
 
     if debug:
-        labeled_audio_files = glob.glob('path_to_labeled_audio_files/*.wav')  # Adjust path and extension accordingly
+        labeled_audio_files = glob.glob('dnd_sample/*.wav')  # Adjust path and extension accordingly
         file_pointer = random.randint(0, len(labeled_audio_files) - 1)  # Randomly initialize the file pointer
 
     while True:  # Infinite loop, can be exited with CTRL + C or some exit condition
@@ -47,21 +51,21 @@ def main():
         print(f"Transcription: {transcription}")
 
         # 3. Scene Understanding: Understand the current scene and update the database
-        current_scene = process_scene_text(transcription)
+        current_scene = scene_processor_instance.process_scene_text(transcription, current_scene)
 
         # 4. Named Entity Recognition: Identify characters and scenes
-        current_scene = identify_named_entities(transcription, current_scene)
+        current_scene = named_entity_recognizer_instance.identify_named_entities(transcription, current_scene)
 
         print(current_scene)
 
         # 5. Determine if the text is visualizable
-        parser = OpenAIParser()
-        if not parser.generate_prompt(current_scene, transcription):
+
+        if not parser_instance.generate_prompt(current_scene, transcription):
             print("The text is not visualizable.")
             continue  # Skip to the next iteration
 
         # 6. Generate a descriptive prompt for image generation
-        prompt = parser.generate_prompt(transcription)
+        prompt = parser_instance.generate_prompt(transcription)
         print(f"Generated Prompt: {prompt}")
 
         # 7. Generate image based on the prompt
