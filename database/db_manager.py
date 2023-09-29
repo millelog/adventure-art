@@ -6,14 +6,15 @@ from sqlalchemy.orm import sessionmaker
 
 class DatabaseManager:
     def __init__(self, db_url='sqlite:///dnd_database.db'):
-        self.engine = create_engine(db_url, echo=True)
+        self.engine = create_engine(db_url, echo=False)
         self.Session = sessionmaker(bind=self.engine)
         self.session = self.Session()
 
     def create_all(self):
         Base.metadata.create_all(self.engine)
 
-    def update_character_descriptors(self, name, descriptors, scene):
+    def update_character_descriptors(self, name, descriptors):
+        scene = self.get_current_scene()
         character = self.get_character_by_name(name)
         if character is None:
             character = Character(name=name)
@@ -31,7 +32,7 @@ class DatabaseManager:
         return character
 
     # The summarize_scene function
-    def create_new_scene(self, scene_description, characters_present, characters_descriptors):
+    def create_new_scene(self, scene_description, characters_present):
         # End the current scene
         ended_scene = self.end_current_scene()
 
@@ -49,13 +50,10 @@ class DatabaseManager:
                 character = self.add_character(char_name, "")
             self.link_character_scene(character, new_scene)
 
-            # Update character descriptors if provided
-            if char_name in characters_descriptors:
-                self.update_character_descriptors(char_name, characters_descriptors[char_name], new_scene)
-
         return new_scene
 
-    def update_current_scene(self, scene, scene_title, scene_description, characters_present, characters_descriptors):
+    def update_current_scene(self, scene_title, scene_description, characters_present):
+        scene = self.get_current_scene()
         # Update scene description
         scene.title = scene_title
         scene.summary = scene_description
@@ -67,10 +65,6 @@ class DatabaseManager:
             if character is None:
                 character = self.add_character(char_name, "")  # Assuming empty string for description
             self.link_character_scene(character, scene)  # Assuming character is present in the scene
-
-            # Update character descriptors if provided
-            if char_name in characters_descriptors:
-                self.update_character_descriptors(char_name, characters_descriptors[char_name], scene)
 
         return scene  # Return the updated scene object
 

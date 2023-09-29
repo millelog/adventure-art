@@ -4,8 +4,7 @@ import json
 from database import DatabaseManager
 from nlp.summarization import Summarizer
 from config.settings import OPENAI_API_KEY
-from database.models import Scene
-
+from utils.utils import scene_to_text
 # Initialize your database manager
 
 class scene_processor:
@@ -14,7 +13,7 @@ class scene_processor:
         openai.api_key = OPENAI_API_KEY
         self.db_manager = DatabaseManager()
 
-    def process_scene_text(self, text: str, current_scene: Scene):
+    def process_scene_text(self, text: str):
 
         """Process the text to understand the scene and update the database."""
 
@@ -27,13 +26,6 @@ class scene_processor:
                     "properties": {
                         "scene_description": {"type": "string"},
                         "characters_present": {"type": "array", "items": {"type": "string"}},
-                        "characters_descriptors": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "array",
-                                "items": {"type": "string"}
-                            }
-                        }
                     },
                     "required": ["scene_description", "characters_present", "characters_descriptors"]
                 }
@@ -44,17 +36,9 @@ class scene_processor:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "scene": {"type": "object"},  # Assuming scene is passed as an object, adjust as needed
                         "scene_title": {"type": "string"},
                         "scene_description": {"type": "string"},
                         "characters_present": {"type": "array", "items": {"type": "string"}},
-                        "characters_descriptors": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "array",
-                                "items": {"type": "string"}
-                            }
-                        }
                     },
                     "required": ["scene", "scene_title", "scene_description", "characters_present", "characters_descriptors"]
                 }
@@ -66,8 +50,10 @@ class scene_processor:
             {"role": "user", "content": f"Process the following text to understand the scene and characters: {text}"}
         ]
 
+        current_scene = self.db_manager.get_current_scene()
+
         if current_scene:
-            messages.append({"role": "system", "content": f"The most recent scene object is: {current_scene}"})
+            messages.append({"role": "system", "content": f"The most recent scene object is: {scene_to_text(current_scene)}"})
 
         response = openai.ChatCompletion.create(
             model="gpt-4-0613",
@@ -83,8 +69,9 @@ class scene_processor:
 
             if function_name == "create_new_scene":
                 # Summarize the ended scene
-                summary = Summarizer.summarize_scene(current_scene)
-                self.db_manager.add_narrative(summary, current_scene)
+                if current_scene:
+                    summary = Summarizer.summarize_scene(current_scene)
+                    self.db_manager.add_narrative(summary, current_scene)
 
                 return self.db_manager.create_new_scene(**function_args)
 
@@ -93,6 +80,5 @@ class scene_processor:
 
 if __name__ == "__main__":
     text_sample = "In a dark and stormy night, Arthur and Merlin were devising a plan in the grand hall."
-    scene_processor_instance = scene_processor()
-    current_scene = scene_processor_instance.db_manager.get_latest_scene()  # Assume this method gets the latest scene from the database
-    scene_processor_instance.process_scene_text(text_sample, current_scene)
+    scene_processor_instance = scene_processor() # Assume this method gets the latest scene from the database
+    scene_processor_instance.process_scene_text(text_sample)

@@ -2,6 +2,8 @@ import openai
 import json
 from config import OPENAI_API_KEY
 from database.models import Scene
+from utils.utils import scene_to_text
+
 
 
 class OpenAIParser:
@@ -24,22 +26,11 @@ class OpenAIParser:
             }
         ]
 
-        # Get characters and their descriptions from the current scene
-        characters_info = []
-        for character in current_scene.characters:
-            char_info = f"{character.name} is {', '.join(character.descriptors)}"
-            characters_info.append(char_info)
-        characters_info_str = '; '.join(characters_info)
-
-        # Prepare the scene and characters info string
-        scene_and_characters_info = f"The current scene is {current_scene.title}, described as: {current_scene.summary}. " \
-                                    f"The characters present are: {characters_info_str}."
-
         messages = [
             {"role": "system",
              "content": f"You are a helpful assistant for determining visualizability and generating image prompts."},
             {"role": "system",
-             "content": scene_and_characters_info},  # Providing scene and characters info to the model
+             "content": scene_to_text(current_scene)},  # Providing scene and characters info to the model
             {"role": "user",
              "content": f"Generate an image for the following section of a Dungeons and Dragons session if there is something that is visualizable: {raw_text}"}
         ]

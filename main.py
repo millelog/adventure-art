@@ -11,7 +11,8 @@ from asr.whisper_asr import WhisperASR
 from api_parser.openai_parser import OpenAIParser
 from nlp.named_entity_recognition import named_entity_recognizer
 from nlp.scene_understanding import scene_processor
-from config.settings import OPENAI_API_KEY
+from database.db_manager import DatabaseManager
+from utils.utils import scene_to_text
 
 # Import the image generation and GUI modules when they are available
 # from image_generator.text_to_image import TextToImage
@@ -19,8 +20,8 @@ from config.settings import OPENAI_API_KEY
 
 def main():
     # Initialize Database Manager
-    print(OPENAI_API_KEY)
     current_scene = None
+    db_manager = DatabaseManager()
     scene_processor_instance = scene_processor()
     named_entity_recognizer_instance = named_entity_recognizer()
     parser_instance = OpenAIParser()
@@ -51,21 +52,21 @@ def main():
         print(f"Transcription: {transcription}")
 
         # 3. Scene Understanding: Understand the current scene and update the database
-        current_scene = scene_processor_instance.process_scene_text(transcription, current_scene)
+        scene_processor_instance.process_scene_text(transcription)
 
         # 4. Named Entity Recognition: Identify characters and scenes
-        current_scene = named_entity_recognizer_instance.identify_named_entities(transcription, current_scene)
+        named_entity_recognizer_instance.identify_named_entities(transcription)
 
-        print(current_scene)
-
-        # 5. Determine if the text is visualizable
-
-        if not parser_instance.generate_prompt(current_scene, transcription):
-            print("The text is not visualizable.")
-            continue  # Skip to the next iteration
+        current_scene = db_manager.get_current_scene()
+        print(scene_to_text(current_scene))
 
         # 6. Generate a descriptive prompt for image generation
-        prompt = parser_instance.generate_prompt(transcription)
+        prompt = parser_instance.generate_prompt(current_scene, transcription)
+
+        if not prompt:
+            print("Text is not visualizable")
+            continue
+
         print(f"Generated Prompt: {prompt}")
 
         # 7. Generate image based on the prompt

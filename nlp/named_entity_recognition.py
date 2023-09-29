@@ -2,6 +2,7 @@ import openai
 import json
 from database import DatabaseManager
 from config.settings import OPENAI_API_KEY
+from utils.utils import scene_to_text
 
 
 class named_entity_recognizer:
@@ -9,7 +10,7 @@ class named_entity_recognizer:
         openai.api_key = OPENAI_API_KEY
         self.db_manager = DatabaseManager()
 
-    def identify_named_entities(self, text: str, current_scene=None):
+    def identify_named_entities(self, text: str):
         """Identify named entities in a given text."""
 
         # Prepare function descriptions for OpenAI API call
@@ -21,8 +22,7 @@ class named_entity_recognizer:
                     "type": "object",
                     "properties": {
                         "name": {"type": "string"},
-                        "descriptors": {"type": "array", "items": {"type": "string"}},
-                        "scene": {"type": "object"}  # Assuming scene is passed as an object, adjust as needed
+                        "descriptors": {"type": "array", "items": {"type": "string"}}
                     },
                     "required": ["name", "descriptors", "scene"]
                 }
@@ -35,9 +35,11 @@ class named_entity_recognizer:
             {"role": "user", "content": f"Identify the characters and scenes in the following text: {text}"}
         ]
 
+        current_scene = self.db_manager.get_current_scene()
+
         # If a current scene is provided, include it in the messages to provide context to the model
         if current_scene:
-            messages.append({"role": "system", "content": f"The most recent scene object is: {current_scene}"})
+            messages.append({"role": "system", "content": f"The most recent scene object is: {scene_to_text(current_scene)}"})
 
         # Make OpenAI API call
         response = openai.ChatCompletion.create(
