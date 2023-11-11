@@ -1,14 +1,14 @@
-import openai
 import json
 from database import DatabaseManager
-from config.settings import OPENAI_API_KEY
+from config.settings import OPENAI_API_KEY, OPENAI_MODEL
 from utils.utils import scene_to_text
+from openai import OpenAI
 
 
 class named_entity_recognizer:
-    def __init__(self):
-        openai.api_key = OPENAI_API_KEY
-        self.db_manager = DatabaseManager()
+    def __init__(self, db_manager):
+        self.client = OpenAI(api_key=OPENAI_API_KEY)
+        self.db_manager = db_manager
 
     def identify_named_entities(self, text: str):
         """Identify named entities in a given text."""
@@ -42,18 +42,21 @@ class named_entity_recognizer:
             messages.append({"role": "system", "content": f"The most recent scene object is: {scene_to_text(current_scene)}"})
 
         # Make OpenAI API call
-        response = openai.ChatCompletion.create(
-            model="gpt-4-0613",
+        response = self.client.chat.completions.create(
+            model=OPENAI_MODEL,
             messages=messages,
             functions=functions,
         )
 
         # Process the response
-        response_message = response["choices"][0]["message"]
+        # Updating response handling to align with Pydantic model
+        response_message = response.choices[0].message
 
-        if response_message.get("function_call"):
-            function_name = response_message["function_call"]["name"]
-            function_args = json.loads(response_message["function_call"]["arguments"])
+        # Checking if the response message has a 'function_call' and is not None
+        if hasattr(response_message, "function_call") and response_message.function_call:
+            function_name = response_message.function_call.name
+            # Parsing the arguments from JSON string to dictionary
+            function_args = json.loads(response_message.function_call.arguments)
 
             if function_name == "update_character_descriptors":
                 return self.db_manager.update_character_descriptors(**function_args)

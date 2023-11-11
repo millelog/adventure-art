@@ -4,6 +4,7 @@ import os
 
 # ===== API Configuration =====
 OPENAI_API_KEY = os.environ.get('ADVENTURE_ART_OPENAI_API_KEY', '')
+OPENAI_MODEL = 'gpt-4-1106-preview'
 
 # ===== Audio Configuration =====
 AUDIO_SAMPLE_RATE = 44100

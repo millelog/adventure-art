@@ -1,5 +1,7 @@
 # utils/utils.py
 
+import re
+
 def scene_to_text(current_scene):
     """
     Convert a Scene object into a descriptive text string.
@@ -26,5 +28,9 @@ def scene_to_text(current_scene):
     )
 
     return scene_and_characters_info
+
+def numerical_sort(file):
+    numbers = re.findall(r'\d+', file)
+    return [int(num) for num in numbers]
 
 # Now you can import scene_to_text from utils.py in other scripts and use it to convert a Scene object to text.
