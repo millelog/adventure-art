@@ -18,6 +18,19 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   
+    // Add keyboard event listener for fullscreen toggle
+    document.addEventListener('keydown', function(e) {
+      // Toggle fullscreen on 'F' key or Escape
+      if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      } else if (e.key === 'Escape') {
+        const container = document.querySelector('.scene-container');
+        if (container.classList.contains('fullscreen')) {
+          toggleFullscreen();
+        }
+      }
+    });
+  
     function updateSceneImage(imageUrl) {
       var imageElement = document.getElementById("scene-image");
       if (imageElement) {
@@ -81,30 +94,15 @@ function displayCharacters(characters) {
         const card = document.createElement('div');
         card.className = 'character-card';
         card.innerHTML = `
-            <div class="character-card-image">
-                <img src="${data.image_url || '/static/images/default-character.png'}" alt="${data.name || id}">
-            </div>
             <div class="character-card-content">
                 <h3>${data.name || id}</h3>
                 <p><strong>ID:</strong> ${id}</p>
                 <p>${data.description || 'No description provided.'}</p>
                 <button onclick="editCharacter('${id}')">Edit</button>
-                <button onclick="deleteCharacter('${id}')">Delete</button>
+                <button class="delete" onclick="deleteCharacter('${id}')">Delete</button>
             </div>
         `;
         characterList.appendChild(card);
-    }
-}
-
-function previewImage(input) {
-    const preview = document.getElementById('character-image-preview');
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.src = e.target.result;
-            preview.style.display = 'block';
-        };
-        reader.readAsDataURL(input.files[0]);
     }
 }
 
@@ -115,10 +113,6 @@ function editCharacter(id) {
             document.getElementById('character-id').value = id;
             document.getElementById('character-name').value = character.name || '';
             document.getElementById('character-description').value = character.description || '';
-            if (character.image_url) {
-                document.getElementById('character-image-preview').src = character.image_url;
-                document.getElementById('character-image-preview').style.display = 'block';
-            }
         })
         .catch(error => console.error('Error loading character:', error));
 }
@@ -127,24 +121,22 @@ async function saveCharacter() {
     const id = document.getElementById('character-id').value;
     const name = document.getElementById('character-name').value;
     const description = document.getElementById('character-description').value;
-    const imageFile = document.getElementById('character-image').files[0];
     
     if (!id || !name || !description) {
         alert('Please fill in all required fields');
         return;
     }
     
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('description', description);
-    if (imageFile) {
-        formData.append('image', imageFile);
-    }
-    
     try {
         const response = await fetch(`/characters/${id}`, {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: name,
+                description: description
+            })
         });
         
         if (response.ok) {
@@ -153,9 +145,6 @@ async function saveCharacter() {
             document.getElementById('character-id').value = '';
             document.getElementById('character-name').value = '';
             document.getElementById('character-description').value = '';
-            document.getElementById('character-image').value = '';
-            document.getElementById('character-image-preview').src = '';
-            document.getElementById('character-image-preview').style.display = 'none';
         } else {
             alert('Error saving character');
         }
@@ -185,4 +174,23 @@ async function deleteCharacter(id) {
         alert('Error deleting character');
     }
 }
+
+// Add the toggleFullscreen function
+function toggleFullscreen() {
+  const container = document.querySelector('.scene-container');
+  const expandIcon = container.querySelector('.expand-icon');
+  const compressIcon = container.querySelector('.compress-icon');
+  
+  container.classList.toggle('fullscreen');
+  
+  // Toggle icon visibility
+  expandIcon.style.display = container.classList.contains('fullscreen') ? 'none' : 'block';
+  compressIcon.style.display = container.classList.contains('fullscreen') ? 'block' : 'none';
+  
+  // Prevent scrolling when in fullscreen
+  document.body.style.overflow = container.classList.contains('fullscreen') ? 'hidden' : '';
+}
+
+// Make toggleFullscreen available globally
+window.toggleFullscreen = toggleFullscreen;
   

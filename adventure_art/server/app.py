@@ -94,44 +94,20 @@ def get_character(character_id):
 def save_character(character_id):
     """Add or update a character."""
     try:
-        # Check if we're receiving form data or JSON
-        if request.content_type and 'multipart/form-data' in request.content_type:
-            # Handle form data with possible image upload
-            name = request.form.get('name')
-            description = request.form.get('description')
-            image_file = request.files.get('image')
-            
-            if not name or not description:
-                return jsonify({"error": "Name and description are required"}), 400
-            
-            character_data = {
-                "name": name,
-                "description": description
-            }
-            
-            # Update character with image if provided
-            updated_characters = character_store.add_or_update_character(
-                character_id,
-                character_data,
-                image_file
-            )
-            return jsonify(updated_characters)
-        else:
-            # Handle JSON data
-            data = request.get_json()
-            if not data:
-                return jsonify({"error": "No data provided"}), 400
-            
-            character_data = {
-                "name": data.get("name"),
-                "description": data.get("description")
-            }
-            
-            if not character_data["name"] or not character_data["description"]:
-                return jsonify({"error": "Name and description are required"}), 400
-            
-            updated_characters = character_store.add_or_update_character(character_id, character_data)
-            return jsonify(updated_characters)
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        character_data = {
+            "name": data.get("name"),
+            "description": data.get("description")
+        }
+        
+        if not character_data["name"] or not character_data["description"]:
+            return jsonify({"error": "Name and description are required"}), 400
+        
+        updated_characters = character_store.add_or_update_character(character_id, character_data)
+        return jsonify(updated_characters)
             
     except Exception as e:
         print("Error saving character:", e)

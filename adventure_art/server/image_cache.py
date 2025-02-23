@@ -21,16 +21,16 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 # Keep track of cached images in order
 cached_images = deque(maxlen=CACHE_SIZE)
 
-def download_and_cache_image(image_url):
+def download_and_cache_image(image_source):
     """
-    Downloads an image from a URL and stores it in the cache.
+    Copies an image from a source (URL or local path) to the cache.
     If cache is full, removes oldest image.
     
     Parameters:
-        image_url (str): URL of the image to download
+        image_source (str): URL or local file path of the image
         
     Returns:
-        str: Local path to the cached image that can be served
+        str: Filename of the cached image that can be served
     """
     try:
         # Generate a filename based on timestamp
@@ -38,14 +38,24 @@ def download_and_cache_image(image_url):
         filename = f"scene_{timestamp}.png"
         filepath = os.path.join(CACHE_DIR, filename)
         
-        # Download the image
-        response = requests.get(image_url, stream=True)
-        response.raise_for_status()
+        # Check if source is a URL or local file
+        is_url = image_source.startswith(('http://', 'https://'))
         
-        # Save the image
-        with open(filepath, 'wb') as f:
-            response.raw.decode_content = True
-            shutil.copyfileobj(response.raw, f)
+        if is_url:
+            # Download from URL
+            response = requests.get(image_source, stream=True)
+            response.raise_for_status()
+            with open(filepath, 'wb') as f:
+                response.raw.decode_content = True
+                shutil.copyfileobj(response.raw, f)
+        else:
+            # Copy from local file
+            shutil.copy2(image_source, filepath)
+            # Remove the temporary file since we've copied it to our cache
+            try:
+                os.remove(image_source)
+            except Exception as e:
+                print(f"Warning: Could not remove temporary file {image_source}: {e}")
         
         # Add to cache tracking
         cached_images.append(filename)

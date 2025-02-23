@@ -15,7 +15,7 @@ import time
 import threading
 
 # Configuration
-CHUNK_DURATION = 120       # Duration of each audio chunk in seconds
+CHUNK_DURATION = 60       # Duration of each audio chunk in seconds
 SAMPLE_RATE = 44100       # Standard sample rate for audio recording
 CHANNELS = 1              # Number of audio channels (1 for mono, 2 for stereo)
 

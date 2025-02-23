@@ -24,6 +24,15 @@ if not OPENAI_API_KEY:
     print("3. The application has permission to read the file")
     sys.exit(1)
 
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+if not GEMINI_API_KEY:
+    print("Error: GEMINI_API_KEY environment variable is not set!")
+    print("Please check that:")
+    print("1. Your .env file exists in the project root directory")
+    print("2. It contains a valid GEMINI_API_KEY")
+    print("3. The application has permission to read the file")
+    sys.exit(1)
+
 # Get project root directory
 project_root = Path(__file__).resolve().parent.parent.parent
 
