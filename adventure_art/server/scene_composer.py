@@ -77,7 +77,7 @@ def compose_scene(transcript):
     try:
         # Call the OpenAI chat completion API with tighter constraints
         response = client.chat.completions.create(
-            model="gpt-4",  # Using GPT-4 for better understanding of character descriptions
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a concise D&D scene descriptor focused on clear, imageable moments. "
                  "Only include characters that are actually mentioned or implied in the transcript, maintaining consistency with their descriptions."},
