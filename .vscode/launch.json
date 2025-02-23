@@ -1,0 +1,91 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Flask Server",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/adventure_art/server/app.py",
+            "env": {
+                "FLASK_APP": "adventure_art.server.app",
+                "FLASK_ENV": "development",
+                "PYTHONPATH": "${workspaceFolder}",
+                "OPENAI_API_KEY": "${env:OPENAI_API_KEY}",
+                "CHARACTER_DATA_PATH": "${workspaceFolder}/adventure_art/server/character_data"
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "jinja": true,
+            "justMyCode": true
+        },
+        {
+            "name": "Audio Recorder Client",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/client/recorder.py",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "justMyCode": true
+        },
+        {
+            "name": "Run All Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "-v",
+                "tests/"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "TESTING": "True"
+            },
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
+        },
+        {
+            "name": "Run Current Test File",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "-v",
+                "${file}"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "TESTING": "True"
+            },
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
+        },
+        {
+            "name": "Debug Current Test",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "-v",
+                "--no-cov",
+                "${file}::${selectedText}",
+                "-s"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "TESTING": "True"
+            },
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false,
+            "purpose": ["debug-test"]
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Server + Client",
+            "configurations": ["Flask Server", "Audio Recorder Client"]
+        }
+    ]
+} 

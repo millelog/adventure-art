@@ -7,11 +7,11 @@ character store and composes a prompt for the OpenAI language model.
 """
 
 import openai
-from config import OPENAI_API_KEY
-import character_store
+from adventure_art.server.config import OPENAI_API_KEY
+from adventure_art.server import character_store
 
 # Set the OpenAI API key
-openai.api_key = OPENAI_API_KEY
+client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 def compose_scene(transcript):
     """
@@ -47,20 +47,25 @@ def compose_scene(transcript):
     )
     
     try:
-        # Call the OpenAI completion API (using text-davinci-003 for this example).
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=prompt,
+        # Call the OpenAI chat completion API
+        response = client.chat.completions.create(
+            model="gpt-4",  # or "gpt-3.5-turbo" if you prefer
+            messages=[
+                {"role": "system", "content": "You are a creative D&D scene description generator."},
+                {"role": "user", "content": prompt}
+            ],
             max_tokens=500,
-            temperature=0.7,
-            n=1,
-            stop=None
+            temperature=0.7
         )
         
-        scene_description = response.choices[0].text.strip()
+        scene_description = response.choices[0].message.content.strip()
         return scene_description
+    except openai.APIError as e:
+        raise Exception(f"OpenAI API error: {str(e)}")
+    except openai.APIConnectionError as e:
+        raise Exception(f"Error connecting to OpenAI API. Please check your internet connection and API key: {str(e)}")
     except Exception as e:
-        raise Exception(f"Error generating scene description: {e}")
+        raise Exception(f"Error generating scene description: {str(e)}")
 
 # Example usage for testing:
 if __name__ == "__main__":

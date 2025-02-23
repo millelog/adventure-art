@@ -6,7 +6,7 @@ It receives a textual scene description and returns the URL of the generated ima
 """
 
 import openai
-from config import OPENAI_API_KEY
+from adventure_art.server.config import OPENAI_API_KEY
 
 # Set the OpenAI API key (assumes same key is used for both text and image generation)
 openai.api_key = OPENAI_API_KEY

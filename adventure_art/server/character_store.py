@@ -7,7 +7,7 @@ Data is stored in a JSON file located in the directory specified by config.CHARA
 
 import os
 import json
-from config import CHARACTER_DATA_PATH
+from adventure_art.server.config import CHARACTER_DATA_PATH
 
 # Define the filename for storing character data
 CHARACTER_FILE = os.path.join(CHARACTER_DATA_PATH, 'characters.json')

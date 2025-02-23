@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>D&D Live Scene</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; }
+    #scene-image { max-width: 100%; height: auto; border: 2px solid #ddd; }
+    
+    /* Navigation styles */
+    .nav-tabs {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 20px;
+    }
+    .nav-tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      margin-bottom: -1px;
+    }
+    .nav-tab.active {
+      border: 1px solid #ddd;
+      border-bottom-color: white;
+      background: white;
+    }
+    
+    /* Character management styles */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    .character-form {
+      margin-bottom: 20px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .character-form input,
+    .character-form textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+    }
+    
+    .character-list {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+    
+    .character-card {
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 4px;
+    }
+    
+    .character-card button {
+      margin-top: 10px;
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>D&D Live Scene</h1>
+  
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-tab="scene">Live Scene</div>
+    <div class="nav-tab" data-tab="characters">Character Management</div>
+  </div>
+  
+  <div id="scene-tab" class="tab-content active">
+    <img id="scene-image" src="" alt="Generated Scene Image">
+  </div>
+  
+  <div id="characters-tab" class="tab-content">
+    <div class="character-form">
+      <h2>Add/Update Character</h2>
+      <input type="text" id="character-id" placeholder="Character ID (e.g., wizard_001)">
+      <input type="text" id="character-name" placeholder="Character Name">
+      <textarea id="character-description" placeholder="Character Description" rows="4"></textarea>
+      <button onclick="saveCharacter()">Save Character</button>
+    </div>
+    
+    <h2>Characters</h2>
+    <div id="character-list" class="character-list">
+      <!-- Characters will be populated here -->
+    </div>
+  </div>
+  
+  <!-- Include Socket.IO client library -->
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  <!-- Custom client script -->
+  <script src="{{ url_for('static', filename='js/client.js') }}"></script>
+</body>
+</html>

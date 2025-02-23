@@ -11,7 +11,14 @@ import tempfile
 import os
 
 # Load the local Whisper large model (this might take a moment at startup)
-model = whisper.load_model("large")
+model = None
+
+def get_model():
+    """Get or initialize the Whisper model."""
+    global model
+    if model is None:
+        model = whisper.load_model("large")
+    return model
 
 def transcribe_audio(audio_file):
     """
@@ -33,7 +40,7 @@ def transcribe_audio(audio_file):
     
     try:
         # Use Whisper to transcribe the audio from the temporary file
-        result = model.transcribe(tmp_path)
+        result = get_model().transcribe(tmp_path)
         transcript = result.get("text", "")
     except Exception as e:
         raise Exception(f"Error during transcription: {e}")
