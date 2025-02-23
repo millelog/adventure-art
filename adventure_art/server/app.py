@@ -11,7 +11,16 @@ Main server application that:
 """
 
 import os
-from flask import Flask, request, render_template, jsonify
+import sys
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env file from project root
+dotenv_path = Path(__file__).resolve().parent.parent.parent / '.env'
+success = load_dotenv(dotenv_path)
+
+
+from flask import Flask, request, render_template, jsonify, send_from_directory
 from flask_socketio import SocketIO
 import traceback
 
@@ -20,15 +29,31 @@ from adventure_art.server import transcribe
 from adventure_art.server import scene_composer
 from adventure_art.server import image_generator
 from adventure_art.server import character_store
+from adventure_art.server import image_cache
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'  # Update this for production.
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')  # Get from .env
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 socketio = SocketIO(app)
 
 @socketio.on('connect')
 def handle_connect():
     """Handle client connection."""
     print("Client connected")
+    # Send the latest cached image if available
+    latest_image = get_latest_cached_image()
+    if latest_image:
+        socketio.emit('new_image', {'image_url': f'/scene_images/{latest_image}'})
+
+def get_latest_cached_image():
+    """Get the filename of the most recent cached image."""
+    try:
+        files = sorted(Path(image_cache.CACHE_DIR).glob('scene_*.png'))
+        if files:
+            return files[-1].name
+    except Exception as e:
+        print(f"Error getting latest cached image: {e}")
+    return None
 
 @socketio.on('new_image')
 def handle_new_image(data):
@@ -69,17 +94,45 @@ def get_character(character_id):
 def save_character(character_id):
     """Add or update a character."""
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "No data provided"}), 400
-        
-        character_data = {
-            "name": data.get("name"),
-            "description": data.get("description")
-        }
-        
-        character_store.add_or_update_character(character_id, character_data)
-        return jsonify({"message": "Character saved successfully"})
+        # Check if we're receiving form data or JSON
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            # Handle form data with possible image upload
+            name = request.form.get('name')
+            description = request.form.get('description')
+            image_file = request.files.get('image')
+            
+            if not name or not description:
+                return jsonify({"error": "Name and description are required"}), 400
+            
+            character_data = {
+                "name": name,
+                "description": description
+            }
+            
+            # Update character with image if provided
+            updated_characters = character_store.add_or_update_character(
+                character_id,
+                character_data,
+                image_file
+            )
+            return jsonify(updated_characters)
+        else:
+            # Handle JSON data
+            data = request.get_json()
+            if not data:
+                return jsonify({"error": "No data provided"}), 400
+            
+            character_data = {
+                "name": data.get("name"),
+                "description": data.get("description")
+            }
+            
+            if not character_data["name"] or not character_data["description"]:
+                return jsonify({"error": "Name and description are required"}), 400
+            
+            updated_characters = character_store.add_or_update_character(character_id, character_data)
+            return jsonify(updated_characters)
+            
     except Exception as e:
         print("Error saving character:", e)
         return jsonify({"error": str(e)}), 500
@@ -106,27 +159,66 @@ def upload_audio():
         return "No file selected", 400
 
     try:
-        # Step 1: Transcribe the audio using Whisper (or your transcription module).
-        transcript = transcribe.transcribe_audio(audio_file)
-        print("Transcript:", transcript)
+        # Step 1: Transcribe the audio using Whisper
+        try:
+            transcript = transcribe.transcribe_audio(audio_file)
+            print("Transcript:", transcript)
+        except Exception as e:
+            print(f"Error during transcription: {e}")
+            return "Transcription failed", 500
 
-        # Step 2: Compose a detailed scene description using the transcript and character data.
+        # Step 2: Compose a scene description
         scene_description = scene_composer.compose_scene(transcript)
-        print("Scene Description:", scene_description)
+        if scene_description:
+            print("Scene Description:", scene_description)
+        else:
+            print("No valid scene could be composed")
+            return "No valid scene could be composed", 200
 
-        # Step 3: Generate an image for the scene using DALL-E 3.
-        image_url = image_generator.generate_image(scene_description)
-        print("Generated Image URL:", image_url)
-
-        # Step 4: Emit the new image URL to all connected clients.
-        socketio.emit('new_image', {'image_url': image_url})
-        return "Audio processed successfully", 200
+        # Step 3: Generate an image for the scene
+        dalle_url = image_generator.generate_image(scene_description)
+        if dalle_url:
+            print("Generated Image URL:", dalle_url)
+            
+            # Step 4: Cache the image locally
+            cached_filename = image_cache.download_and_cache_image(dalle_url)
+            if cached_filename:
+                # Step 5: Emit the cached image URL to all connected clients
+                cached_url = f'/scene_images/{cached_filename}'
+                print("Emitting new image URL:", cached_url)
+                socketio.emit('new_image', {'image_url': cached_url})
+                return "Audio processed successfully", 200
+            else:
+                print("Failed to cache the image")
+                return "Image caching failed", 500
+        else:
+            print("Image generation failed")
+            return "Image generation failed", 200
 
     except Exception as e:
         print("Error processing audio chunk:", e)
         traceback.print_exc()
         return "Internal Server Error", 500
 
+# Add route to serve character images
+@app.route('/character_images/<path:filename>')
+def serve_character_image(filename):
+    """Serve character images from the images directory."""
+    try:
+        return send_from_directory(character_store.IMAGES_DIR, filename)
+    except Exception as e:
+        print(f"Error serving character image {filename}: {e}")
+        return "Image not found", 404
+
+# Add route to serve cached scene images
+@app.route('/scene_images/<path:filename>')
+def serve_scene_image(filename):
+    """Serve scene images from the cache directory."""
+    try:
+        return send_from_directory(image_cache.CACHE_DIR, filename)
+    except Exception as e:
+        print(f"Error serving scene image {filename}: {e}")
+        return "Image not found", 404
 
 if __name__ == '__main__':
     # Run the Flask-SocketIO app.

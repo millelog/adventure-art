@@ -12,14 +12,35 @@ import numpy as np
 import requests
 import io
 import time
+import threading
 
 # Configuration
-CHUNK_DURATION = 60       # Duration of each audio chunk in seconds
+CHUNK_DURATION = 120       # Duration of each audio chunk in seconds
 SAMPLE_RATE = 44100       # Standard sample rate for audio recording
 CHANNELS = 1              # Number of audio channels (1 for mono, 2 for stereo)
 
 # Replace with the actual URL and port of your server
 SERVER_URL = "http://localhost:5000/upload_audio"
+
+
+def send_audio_chunk(audio_data):
+    """Send audio chunk to server in a separate thread."""
+    # Write the recorded audio to an in-memory buffer as a WAV file
+    buffer = io.BytesIO()
+    try:
+        sf.write(buffer, audio_data, SAMPLE_RATE, format='WAV')
+        buffer.seek(0)  # Reset buffer position to the beginning
+    except Exception as e:
+        print("Error writing audio to buffer:", e)
+        return
+    
+    print("Sending audio chunk to server...")
+    files = {'audio': ('chunk.wav', buffer, 'audio/wav')}
+    try:
+        response = requests.post(SERVER_URL, files=files)
+        print("Server response:", response.status_code, response.text)
+    except Exception as e:
+        print("Error sending audio chunk:", e)
 
 
 def record_and_send():
@@ -35,26 +56,12 @@ def record_and_send():
             print("Error during recording:", e)
             continue
         
-        # Write the recorded audio to an in-memory buffer as a WAV file
-        buffer = io.BytesIO()
-        try:
-            sf.write(buffer, audio_data, SAMPLE_RATE, format='WAV')
-            buffer.seek(0)  # Reset buffer position to the beginning
-        except Exception as e:
-            print("Error writing audio to buffer:", e)
-            continue
+        # Start a new thread to send the audio chunk
+        sender_thread = threading.Thread(target=send_audio_chunk, args=(audio_data,))
+        sender_thread.start()
         
-        print("Sending audio chunk to server...")
-        files = {'audio': ('chunk.wav', buffer, 'audio/wav')}
-        try:
-            response = requests.post(SERVER_URL, files=files)
-            print("Server response:", response.status_code, response.text)
-        except Exception as e:
-            print("Error sending audio chunk:", e)
-        
-        print("Chunk sent. Preparing to record the next chunk...\n")
-        # Optional pause between recordings, if needed
-        time.sleep(1)
+        # Continue with the next recording immediately
+        # The sender thread will handle the upload in the background
 
 
 if __name__ == '__main__':
