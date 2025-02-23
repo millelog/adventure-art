@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>D&D Live Scene</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; }
+    #scene-image { max-width: 100%; height: auto; border: 2px solid #ddd; }
+  </style>
+</head>
+<body>
+  <h1>D&D Live Scene</h1>
+  <img id="scene-image" src="" alt="Generated Scene Image">
+  
+  <!-- Include Socket.IO client library -->
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  <!-- Custom client script -->
+  <script src="{{ url_for('static', filename='js/client.js') }}"></script>
+</body>
+</html>
