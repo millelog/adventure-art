@@ -32,6 +32,7 @@ from adventure_art.server import image_generator
 from adventure_art.server import character_store
 from adventure_art.server import environment_store
 from adventure_art.server import image_cache
+from adventure_art.server import scene_store
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')  # Get from .env
@@ -56,6 +57,14 @@ def handle_connect():
         socketio.emit('environment_update', {'description': current_environment.get('description', '')})
     except Exception as e:
         print(f"Error sending environment on connect: {e}")
+        
+    # Send the last scene prompt
+    try:
+        last_prompt = scene_store.get_last_prompt()
+        if last_prompt:
+            socketio.emit('scene_prompt_update', {'prompt': last_prompt})
+    except Exception as e:
+        print(f"Error sending last scene prompt on connect: {e}")
 
 def get_latest_cached_image():
     """Get the filename of the most recent cached image."""
@@ -202,6 +211,9 @@ def upload_audio():
         scene_description = scene_composer.compose_scene(transcript)
         if scene_description:
             print("Scene Description:", scene_description)
+            
+            # Emit the scene prompt to all connected clients
+            socketio.emit('scene_prompt_update', {'prompt': scene_description})
         else:
             print("No valid scene could be composed")
             return "No valid scene could be composed", 200
@@ -230,6 +242,28 @@ def upload_audio():
         print("Error processing audio chunk:", e)
         traceback.print_exc()
         return "Internal Server Error", 500
+
+# Scene Prompt Management Routes
+@app.route('/scene_prompt', methods=['GET'])
+def get_scene_prompt():
+    """Get the last scene prompt."""
+    try:
+        last_prompt = scene_store.get_last_prompt()
+        return jsonify({"prompt": last_prompt})
+    except Exception as e:
+        print("Error getting scene prompt:", e)
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/scene_prompt', methods=['DELETE'])
+def clear_scene_prompt():
+    """Clear the last scene prompt."""
+    try:
+        scene_store.update_last_prompt("")
+        socketio.emit('scene_prompt_update', {'prompt': ""})
+        return jsonify({"success": True, "message": "Scene prompt cleared successfully"})
+    except Exception as e:
+        print("Error clearing scene prompt:", e)
+        return jsonify({"error": str(e)}), 500
 
 # Add route to serve character images
 @app.route('/character_images/<path:filename>')

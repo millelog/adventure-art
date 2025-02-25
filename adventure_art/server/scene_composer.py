@@ -8,9 +8,11 @@ character store and composes a prompt for the OpenAI language model.
 
 import openai
 import re
+import json
 from adventure_art.server.config import OPENAI_API_KEY
 from adventure_art.server import character_store
 from adventure_art.server import environment_store
+from adventure_art.server import scene_store
 
 # Set the OpenAI API key
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
@@ -59,8 +61,43 @@ def compose_scene(transcript):
     environment_data = environment_store.get_environment()
     environment_description = environment_data.get('description', 'No specific environment defined.')
     
+    # Get the previous scene prompt for continuity
+    previous_prompt = scene_store.get_last_prompt()
+    previous_prompt_section = ""
+    if previous_prompt:
+        previous_prompt_section = (
+            "Previous Scene Description:\n"
+            f"{previous_prompt}\n\n"
+            "Use the previous scene description to maintain visual consistency where appropriate, "
+            "but focus on the new action or moment described in the current transcript."
+        )
+    
+    # Define the function for structured output
+    functions = [
+        {
+            "name": "generate_scene_description",
+            "description": "Generate a focused scene description based on the transcript",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "scene_description": {
+                        "type": "string",
+                        "description": "A concise, focused description of the key event in the scene, optimized for image generation. Should be under 200 words and focus on one key moment or action."
+                    }
+                },
+                "required": ["scene_description"]
+            }
+        }
+    ]
+    
     # Build the prompt for the language model with specific constraints
-    prompt = (
+    system_message = (
+        "You are a concise D&D scene descriptor focused on clear, imageable moments. "
+        "Only include characters that are actually mentioned or implied in the transcript, maintaining consistency with their descriptions "
+        "and ensuring the scene is set within the provided environment. Your output should be structured using the function provided."
+    )
+    
+    user_message = (
         "You are a focused scene descriptor for a D&D session. Your task is to identify the most visually interesting "
         "key event from the transcript and describe it in a clear, concise way that's optimized for image generation.\n\n"
         "Guidelines:\n"
@@ -72,33 +109,46 @@ def compose_scene(transcript):
         "- For any characters you include, maintain consistency with their provided descriptions\n"
         "- If no clear action is described, create a simple portrait or scene of the mentioned characters\n"
         "- Avoid complex lighting or camera instructions\n"
-        "- Make the scene consistent with the current environment description\n\n"
+        "- Make the scene consistent with the current environment description\n"
+        f"- {'' if not previous_prompt else 'Maintain visual continuity with the previous scene where appropriate'}\n\n"
         "Current Environment:\n"
         f"{environment_description}\n\n"
-        "Available Characters:\n"
+        + (f"{previous_prompt_section}\n\n" if previous_prompt else "")
+        + "Available Characters:\n"
         f"{character_details}\n\n"
         "Transcript:\n"
         f"{transcript}\n\n"
         "Generate a concise scene description, only including characters that are relevant to this specific moment and ensuring "
-        "it fits within the described environment:"
+        "it fits within the described environment."
     )
     
     try:
-        # Call the OpenAI chat completion API with tighter constraints
+        # Call the OpenAI chat completion API with function calling
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a concise D&D scene descriptor focused on clear, imageable moments. "
-                 "Only include characters that are actually mentioned or implied in the transcript, maintaining consistency with their descriptions "
-                 "and ensuring the scene is set within the provided environment."},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_message}
             ],
+            functions=functions,
+            function_call={"name": "generate_scene_description"},
             max_tokens=500,
             temperature=0.7
         )
         
+        # Extract the function call arguments
+        function_args = json.loads(response.choices[0].message.function_call.arguments)
+        
         # Get the scene description
-        scene_description = response.choices[0].message.content.strip()
+        scene_description = function_args.get("scene_description", "").strip()
+        
+        if not scene_description:
+            print("No valid scene description generated")
+            return None
+        
+        # Store the scene description for future reference
+        scene_store.update_last_prompt(scene_description)
+        
         return scene_description
         
     except Exception as e:

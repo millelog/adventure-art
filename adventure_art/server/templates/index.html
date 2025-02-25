@@ -323,6 +323,62 @@
         font-size: 0.9rem;
       }
     }
+
+    /* Scene image styles */
+    .scene-prompt-container {
+      width: 100%;
+      max-width: 1792px;
+      margin: 20px auto 0;
+      padding: 15px;
+      background-color: var(--bg-secondary);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    
+    .scene-prompt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .scene-prompt-container h3 {
+      color: var(--text-primary);
+      font-size: 1.2rem;
+      margin: 0;
+    }
+    
+    .clear-button {
+      background-color: transparent;
+      color: var(--text-secondary);
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .clear-button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--error);
+    }
+    
+    .scene-prompt-text {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-size: 1rem;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: var(--bg-primary);
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
@@ -338,14 +394,28 @@
     <div id="scene-tab" class="tab-content active">
       <div class="scene-container">
         <button class="fullscreen-toggle" onclick="toggleFullscreen()" title="Toggle fullscreen">
-          <svg class="expand-icon" viewBox="0 0 24 24">
-            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+          <svg class="expand-icon" viewBox="0 0 24 24" width="20" height="20">
+            <path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
           </svg>
-          <svg class="compress-icon" viewBox="0 0 24 24" style="display: none;">
-            <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+          <svg class="compress-icon" viewBox="0 0 24 24" width="20" height="20" style="display: none;">
+            <path fill="currentColor" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
           </svg>
         </button>
         <img id="scene-image" src="" alt="Generated Scene Image">
+      </div>
+      
+      <div class="scene-prompt-container">
+        <div class="scene-prompt-header">
+          <h3>Scene Description</h3>
+          <button id="clear-scene-prompt" class="clear-button" title="Clear scene context (won't be used in future generations)">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </button>
+        </div>
+        <div id="scene-prompt-text" class="scene-prompt-text">
+          No scene has been generated yet.
+        </div>
       </div>
     </div>
     

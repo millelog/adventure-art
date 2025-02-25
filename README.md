@@ -13,11 +13,13 @@ This project provides a real-time pipeline to capture live audio from a Dungeons
 - **Live Audio Processing**: Captures and processes audio in real-time from your D&D session
 - **Smart Scene Generation**: Uses GPT-4o to identify key moments and create vivid scene descriptions
 - **Character Consistency**: Maintains character descriptions across generated scenes
+- **Scene Continuity**: Maintains visual consistency between consecutive scenes by considering previous scene descriptions
 - **Environment Management**: Automatically tracks and updates the game environment based on session context
 - **Environment Locking**: Option to lock environment descriptions to prevent automatic updates
 - **Real-time Updates**: Instantly displays generated images via Socket.IO
 - **Fullscreen Mode**: Toggle fullscreen view with 'F' key or button
 - **Character Management**: Simple interface to add, edit, and delete character descriptions
+- **Scene Context Reset**: Option to clear previous scene context when needed
 
 ## Project Structure
 
@@ -137,10 +139,11 @@ To change the recording settings, modify the following variables in `client/reco
 2. Each chunk is transcribed using Whisper
 3. The transcript is analyzed for significant environment changes
 4. If unlocked, the environment description is updated based on the analysis
-5. GPT-4o analyzes the transcript, character descriptions, and current environment to identify key moments
+5. GPT-4o analyzes the transcript, character descriptions, current environment, and previous scene to identify key moments
 6. A detailed scene description is generated, maintaining character and environment consistency
-7. Google's Imagen 3.0 creates an image based on the description
-8. The image is displayed in real-time on the web dashboard
+7. The scene description is stored for future reference to maintain continuity
+8. Google's Imagen 3.0 creates an image based on the description
+9. The image and scene description are displayed in real-time on the web dashboard
 
 ### Environment Management
 
@@ -152,6 +155,18 @@ The environment system maintains a persistent description of the game's current 
 - **Manually Editable**: Users can directly edit the description through the UI
 - **Context-Aware**: Provides consistent context for scene generation
 - **Focused on Visuals**: Emphasizes elements that would appear in an image (location, lighting, weather, etc.)
+
+### Scene Continuity
+
+The scene continuity system helps maintain visual consistency between consecutive scene generations:
+
+- **Previous Scene Context**: Each generated scene description is stored and used as context for the next generation
+- **Adaptive Continuity**: The system maintains visual consistency while still focusing on new actions or moments
+- **Context Reset**: Users can clear the previous scene context via the UI if they want to start fresh
+- **Real-time Updates**: Scene descriptions are displayed below the generated image and update in real-time
+- **Bidirectional Influence**: Previous scenes influence both environment analysis and scene composition
+
+This approach creates a more coherent visual narrative throughout your D&D session, even as the action and focus change.
 
 ## License
 

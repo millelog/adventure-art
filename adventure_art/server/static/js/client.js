@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // Load characters and environment when connected
       loadCharacters();
       loadEnvironment();
+      loadScenePrompt();
     });
   
     // Listen for new image updates from the server
@@ -32,6 +33,23 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Received invalid environment data:", data);
       }
     });
+    
+    // Listen for scene prompt updates from the server
+    socket.on('scene_prompt_update', function(data) {
+      console.log("Received scene prompt update:", data);
+      if (data && data.prompt !== undefined) {
+        // Update the scene prompt in the UI
+        updateScenePrompt(data.prompt);
+      } else {
+        console.error("Received invalid scene prompt data:", data);
+      }
+    });
+    
+    // Set up clear scene prompt button
+    const clearScenePromptButton = document.getElementById('clear-scene-prompt');
+    if (clearScenePromptButton) {
+      clearScenePromptButton.addEventListener('click', clearScenePrompt);
+    }
   
     // Add keyboard event listener for fullscreen toggle
     document.addEventListener('keydown', function(e) {
@@ -70,6 +88,29 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Scene image element not found");
       }
     }
+    
+    function updateScenePrompt(promptText) {
+      const promptElement = document.getElementById('scene-prompt-text');
+      if (promptElement) {
+        promptElement.textContent = promptText || "No scene has been generated yet.";
+      }
+    }
+  
+    async function clearScenePrompt() {
+      try {
+        const response = await fetch('/scene_prompt', {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          console.log('Scene prompt cleared successfully');
+        } else {
+          console.error('Error clearing scene prompt');
+        }
+      } catch (error) {
+        console.error('Error clearing scene prompt:', error);
+      }
+    }
   
     // Optional: fallback mechanism to refresh periodically
     // setInterval(function(){
@@ -89,6 +130,26 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
 });
+
+// Scene Prompt Management Functions
+async function loadScenePrompt() {
+    try {
+        const response = await fetch('/scene_prompt');
+        const data = await response.json();
+        if (data.prompt) {
+            updateScenePrompt(data.prompt);
+        }
+    } catch (error) {
+        console.error('Error loading scene prompt:', error);
+    }
+}
+
+function updateScenePrompt(promptText) {
+    const promptElement = document.getElementById('scene-prompt-text');
+    if (promptElement) {
+        promptElement.textContent = promptText || "No scene has been generated yet.";
+    }
+}
 
 // Environment Management Functions
 async function loadEnvironment() {
