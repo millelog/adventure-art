@@ -5,9 +5,9 @@ app.py
 Main server application that:
 - Serves the live display frontend.
 - Receives audio chunks via the /upload_audio endpoint.
-- Processes audio: transcription → scene composition → image generation.
+- Processes audio: transcription → environment analysis → scene composition → image generation.
 - Pushes the newly generated image to connected clients using SocketIO.
-- Manages character data through a RESTful API.
+- Manages character and environment data through a RESTful API.
 """
 
 import os
@@ -26,9 +26,11 @@ import traceback
 
 # Import downstream processing modules.
 from adventure_art.server import transcribe
+from adventure_art.server import environment_analyzer
 from adventure_art.server import scene_composer
 from adventure_art.server import image_generator
 from adventure_art.server import character_store
+from adventure_art.server import environment_store
 from adventure_art.server import image_cache
 
 app = Flask(__name__)
@@ -124,6 +126,38 @@ def delete_character(character_id):
         print("Error deleting character:", e)
         return jsonify({"error": str(e)}), 500
 
+# Environment Management Routes
+@app.route('/environment', methods=['GET'])
+def get_environment():
+    """Get current environment data."""
+    try:
+        environment = environment_store.get_environment()
+        return jsonify(environment)
+    except Exception as e:
+        print("Error getting environment:", e)
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/environment', methods=['POST'])
+def save_environment():
+    """Update the environment description and lock status."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        description = data.get("description")
+        locked = data.get("locked")
+        
+        if description is None:
+            return jsonify({"error": "Description is required"}), 400
+        
+        updated_environment = environment_store.update_environment(description, locked)
+        return jsonify(updated_environment)
+            
+    except Exception as e:
+        print("Error saving environment:", e)
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():
     """Endpoint for receiving audio chunks from the client recorder."""
@@ -143,7 +177,14 @@ def upload_audio():
             print(f"Error during transcription: {e}")
             return "Transcription failed", 500
 
-        # Step 2: Compose a scene description
+        # Step 2: Analyze the transcript and update environment if needed
+        try:
+            environment_analyzer.analyze_transcript(transcript)
+        except Exception as e:
+            print(f"Error during environment analysis: {e}")
+            # Continue processing even if environment analysis fails
+
+        # Step 3: Compose a scene description
         scene_description = scene_composer.compose_scene(transcript)
         if scene_description:
             print("Scene Description:", scene_description)
@@ -151,15 +192,15 @@ def upload_audio():
             print("No valid scene could be composed")
             return "No valid scene could be composed", 200
 
-        # Step 3: Generate an image for the scene
+        # Step 4: Generate an image for the scene
         dalle_url = image_generator.generate_image(scene_description)
         if dalle_url:
             print("Generated Image URL:", dalle_url)
             
-            # Step 4: Cache the image locally
+            # Step 5: Cache the image locally
             cached_filename = image_cache.download_and_cache_image(dalle_url)
             if cached_filename:
-                # Step 5: Emit the cached image URL to all connected clients
+                # Step 6: Emit the cached image URL to all connected clients
                 cached_url = f'/scene_images/{cached_filename}'
                 print("Emitting new image URL:", cached_url)
                 socketio.emit('new_image', {'image_url': cached_url})

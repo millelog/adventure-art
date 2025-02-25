@@ -4,8 +4,9 @@ document.addEventListener("DOMContentLoaded", function () {
   
     socket.on('connect', function() {
       console.log("Connected to server via Socket.IO");
-      // Load characters when connected
+      // Load characters and environment when connected
       loadCharacters();
+      loadEnvironment();
     });
   
     // Listen for new image updates from the server
@@ -74,6 +75,64 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
 });
+
+// Environment Management Functions
+async function loadEnvironment() {
+    try {
+        const response = await fetch('/environment');
+        const environment = await response.json();
+        displayEnvironment(environment);
+    } catch (error) {
+        console.error('Error loading environment:', error);
+    }
+}
+
+function displayEnvironment(environment) {
+    const descriptionElement = document.getElementById('environment-description');
+    const lockElement = document.getElementById('environment-lock');
+    
+    if (descriptionElement) {
+        descriptionElement.value = environment.description || '';
+    }
+    
+    if (lockElement) {
+        lockElement.checked = environment.locked || false;
+    }
+}
+
+async function saveEnvironment() {
+    const description = document.getElementById('environment-description').value;
+    const locked = document.getElementById('environment-lock').checked;
+    
+    if (!description) {
+        alert('Please provide an environment description');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/environment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                description: description,
+                locked: locked
+            })
+        });
+        
+        if (response.ok) {
+            const updatedEnvironment = await response.json();
+            displayEnvironment(updatedEnvironment);
+            alert('Environment settings saved successfully');
+        } else {
+            alert('Error saving environment settings');
+        }
+    } catch (error) {
+        console.error('Error saving environment:', error);
+        alert('Error saving environment settings');
+    }
+}
 
 // Character Management Functions
 async function loadCharacters() {
@@ -193,4 +252,7 @@ function toggleFullscreen() {
 
 // Make toggleFullscreen available globally
 window.toggleFullscreen = toggleFullscreen;
+
+// Make environment functions available globally
+window.saveEnvironment = saveEnvironment;
   

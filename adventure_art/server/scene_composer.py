@@ -10,6 +10,7 @@ import openai
 import re
 from adventure_art.server.config import OPENAI_API_KEY
 from adventure_art.server import character_store
+from adventure_art.server import environment_store
 
 # Set the OpenAI API key
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
@@ -54,6 +55,10 @@ def compose_scene(transcript):
     else:
         character_details = "No character data available."
     
+    # Get the current environment description
+    environment_data = environment_store.get_environment()
+    environment_description = environment_data.get('description', 'No specific environment defined.')
+    
     # Build the prompt for the language model with specific constraints
     prompt = (
         "You are a focused scene descriptor for a D&D session. Your task is to identify the most visually interesting "
@@ -66,12 +71,16 @@ def compose_scene(transcript):
         "- Prioritize action and emotion over complex details\n"
         "- For any characters you include, maintain consistency with their provided descriptions\n"
         "- If no clear action is described, create a simple portrait or scene of the mentioned characters\n"
-        "- Avoid complex lighting or camera instructions\n\n"
+        "- Avoid complex lighting or camera instructions\n"
+        "- Make the scene consistent with the current environment description\n\n"
+        "Current Environment:\n"
+        f"{environment_description}\n\n"
         "Available Characters:\n"
         f"{character_details}\n\n"
         "Transcript:\n"
         f"{transcript}\n\n"
-        "Generate a concise scene description, only including characters that are relevant to this specific moment:"
+        "Generate a concise scene description, only including characters that are relevant to this specific moment and ensuring "
+        "it fits within the described environment:"
     )
     
     try:
@@ -80,7 +89,8 @@ def compose_scene(transcript):
             model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are a concise D&D scene descriptor focused on clear, imageable moments. "
-                 "Only include characters that are actually mentioned or implied in the transcript, maintaining consistency with their descriptions."},
+                 "Only include characters that are actually mentioned or implied in the transcript, maintaining consistency with their descriptions "
+                 "and ensuring the scene is set within the provided environment."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=500,

@@ -40,6 +40,9 @@ project_root = Path(__file__).resolve().parent.parent.parent
 CHARACTER_DATA_PATH = os.environ.get('CHARACTER_DATA_PATH', 
     str(project_root / 'adventure_art' / 'server' / 'character_data'))
 
+# File-based environment store configuration - using the same base directory as characters
+ENVIRONMENT_DATA_PATH = CHARACTER_DATA_PATH
+
 # Flask and SocketIO configuration
 SECRET_KEY = os.environ.get('SECRET_KEY', 'your-secret-key')  # Make sure to change in production
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')

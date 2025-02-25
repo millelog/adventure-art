@@ -165,7 +165,7 @@
       display: block;
     }
     
-    .character-form {
+    .character-form, .environment-form {
       margin-bottom: 30px;
       padding: 25px;
       border: 1px solid var(--border);
@@ -173,13 +173,14 @@
       background-color: var(--bg-primary);
     }
 
-    .character-form h2 {
+    .character-form h2, .environment-form h2 {
       margin-bottom: 20px;
       color: var(--text-primary);
     }
     
     .character-form input,
-    .character-form textarea {
+    .character-form textarea,
+    .environment-form textarea {
       width: 100%;
       margin-bottom: 15px;
       padding: 12px;
@@ -191,7 +192,8 @@
     }
 
     .character-form input:focus,
-    .character-form textarea:focus {
+    .character-form textarea:focus,
+    .environment-form textarea:focus {
       outline: none;
       border-color: var(--accent);
     }
@@ -249,6 +251,67 @@
     button.delete:hover {
       background-color: #dc2626;
     }
+    
+    /* Toggle switch styling */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .toggle-label {
+      margin-left: 10px;
+      color: var(--text-secondary);
+    }
+    
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 52px;
+      height: 26px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--bg-secondary);
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+      background-color: var(--accent);
+    }
+    
+    input:focus + .toggle-slider {
+      box-shadow: 0 0 1px var(--accent);
+    }
+    
+    input:checked + .toggle-slider:before {
+      transform: translateX(26px);
+    }
 
     @media (max-width: 768px) {
       .container {
@@ -268,6 +331,7 @@
     
     <div class="nav-tabs">
       <div class="nav-tab active" data-tab="scene">Live Scene</div>
+      <div class="nav-tab" data-tab="environment">Environment</div>
       <div class="nav-tab" data-tab="characters">Character Management</div>
     </div>
     
@@ -282,6 +346,33 @@
           </svg>
         </button>
         <img id="scene-image" src="" alt="Generated Scene Image">
+      </div>
+    </div>
+    
+    <div id="environment-tab" class="tab-content">
+      <div class="environment-form">
+        <h2>Environment Settings</h2>
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" id="environment-lock">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Lock environment (prevent automatic updates)</span>
+        </div>
+        <textarea id="environment-description" placeholder="Environment Description" rows="6"></textarea>
+        <button onclick="saveEnvironment()">Save Environment</button>
+      </div>
+      
+      <div class="environment-info">
+        <h3>About Environment Settings</h3>
+        <p>
+          The environment description provides context for scene generation. It's automatically updated based 
+          on session transcripts, but you can manually edit it or lock it to prevent changes.
+        </p>
+        <p>
+          Keep descriptions concise and focused on visual elements like location, time of day, 
+          weather, and general atmosphere.
+        </p>
       </div>
     </div>
     

@@ -13,6 +13,8 @@ This project provides a real-time pipeline to capture live audio from a Dungeons
 - **Live Audio Processing**: Captures and processes audio in real-time from your D&D session
 - **Smart Scene Generation**: Uses GPT-4o to identify key moments and create vivid scene descriptions
 - **Character Consistency**: Maintains character descriptions across generated scenes
+- **Environment Management**: Automatically tracks and updates the game environment based on session context
+- **Environment Locking**: Option to lock environment descriptions to prevent automatic updates
 - **Real-time Updates**: Instantly displays generated images via Socket.IO
 - **Fullscreen Mode**: Toggle fullscreen view with 'F' key or button
 - **Character Management**: Simple interface to add, edit, and delete character descriptions
@@ -33,6 +35,8 @@ project/
 │   ├── scene_composer.py  # Generates scene descriptions using GPT-4o
 │   ├── image_generator.py # Generates images using Google's Imagen 3.0
 │   ├── character_store.py # File-based character database (JSON)
+│   ├── environment_store.py # File-based environment state management
+│   ├── environment_analyzer.py # Analyzes transcripts for environment changes
 │   ├── image_cache.py     # Manages caching of generated images
 │   ├── templates/
 │   │   └── index.html     # Web dashboard template
@@ -91,6 +95,7 @@ Copy the `.env.example` file to `.env` and update the following environment vari
 
 ### Data Storage
 - `CHARACTER_DATA_PATH`: Path to store character data and cached images
+- `ENVIRONMENT_DATA_PATH`: Path to store environment state data (defaults to CHARACTER_DATA_PATH)
 
 All these settings can also be modified directly in `server/config.py` if preferred.
 
@@ -115,7 +120,13 @@ All these settings can also be modified directly in `server/config.py` if prefer
    - Add characters with unique IDs, names, and descriptions
    - These descriptions will be used to maintain consistency in generated scenes
 
-4. **View Generated Scenes:**
+4. **Manage Environment:**
+   - Navigate to the "Environment" tab
+   - View and edit the current environment description
+   - Toggle the lock switch to prevent automatic updates
+   - Environment descriptions focus on location, atmosphere, time of day, and weather
+
+5. **View Generated Scenes:**
    - The main tab shows the latest generated scene
    - Press 'F' or click the fullscreen button to toggle fullscreen mode
    - Press 'ESC' to exit fullscreen
@@ -124,10 +135,23 @@ All these settings can also be modified directly in `server/config.py` if prefer
 
 1. The recorder captures audio in 60-second chunks
 2. Each chunk is transcribed using Whisper
-3. GPT-4o analyzes the transcript and available character descriptions to identify key moments
-4. A detailed scene description is generated, maintaining character consistency
-5. Google's Imagen 3.0 creates an image based on the description
-6. The image is displayed in real-time on the web dashboard
+3. The transcript is analyzed for significant environment changes
+4. If unlocked, the environment description is updated based on the analysis
+5. GPT-4o analyzes the transcript, character descriptions, and current environment to identify key moments
+6. A detailed scene description is generated, maintaining character and environment consistency
+7. Google's Imagen 3.0 creates an image based on the description
+8. The image is displayed in real-time on the web dashboard
+
+### Environment Management
+
+The environment system maintains a persistent description of the game's current setting. This description is:
+
+- **Automatically Updated**: The system analyzes each audio transcript for significant location or setting changes
+- **Conservative**: Only updates when there's clear evidence of a meaningful change
+- **Lockable**: Can be locked to prevent automatic updates during important scenes
+- **Manually Editable**: Users can directly edit the description through the UI
+- **Context-Aware**: Provides consistent context for scene generation
+- **Focused on Visuals**: Emphasizes elements that would appear in an image (location, lighting, weather, etc.)
 
 ## License
 
