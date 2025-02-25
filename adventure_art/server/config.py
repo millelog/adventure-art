@@ -9,11 +9,6 @@ import os
 import sys
 from pathlib import Path
 
-# Audio settings
-CHUNK_DURATION = int(os.environ.get('CHUNK_DURATION', 60))  # seconds per audio chunk
-SAMPLE_RATE = int(os.environ.get('SAMPLE_RATE', 44100))
-CHANNELS = int(os.environ.get('CHANNELS', 1))
-
 # API Keys
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 if not OPENAI_API_KEY:

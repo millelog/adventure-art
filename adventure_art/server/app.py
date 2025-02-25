@@ -38,6 +38,9 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')  # Get fro
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 socketio = SocketIO(app)
 
+# Set up the emit callback for environment_analyzer
+environment_analyzer.set_emit_callback(lambda description: emit_environment_update(description))
+
 @socketio.on('connect')
 def handle_connect():
     """Handle client connection."""
@@ -46,6 +49,13 @@ def handle_connect():
     latest_image = get_latest_cached_image()
     if latest_image:
         socketio.emit('new_image', {'image_url': f'/scene_images/{latest_image}'})
+    
+    # Send the current environment description
+    try:
+        current_environment = environment_store.get_environment()
+        socketio.emit('environment_update', {'description': current_environment.get('description', '')})
+    except Exception as e:
+        print(f"Error sending environment on connect: {e}")
 
 def get_latest_cached_image():
     """Get the filename of the most recent cached image."""
@@ -152,6 +162,10 @@ def save_environment():
             return jsonify({"error": "Description is required"}), 400
         
         updated_environment = environment_store.update_environment(description, locked)
+        
+        # Emit the environment update to all connected clients
+        emit_environment_update(description)
+        
         return jsonify(updated_environment)
             
     except Exception as e:
@@ -236,6 +250,14 @@ def serve_scene_image(filename):
     except Exception as e:
         print(f"Error serving scene image {filename}: {e}")
         return "Image not found", 404
+
+def emit_environment_update(description):
+    """Emit environment update to all connected clients."""
+    try:
+        socketio.emit('environment_update', {'description': description})
+        print("Emitted environment update via socket")
+    except Exception as e:
+        print(f"Error emitting environment update: {e}")
 
 if __name__ == '__main__':
     # Run the Flask-SocketIO app.

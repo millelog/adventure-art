@@ -9,6 +9,11 @@ audio files provided as file-like objects.
 import whisper
 import tempfile
 import os
+import torch
+
+# Check if CUDA is available and set the device accordingly
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"Using device: {DEVICE}")
 
 # Load the local Whisper large model (this might take a moment at startup)
 model = None
@@ -17,7 +22,9 @@ def get_model():
     """Get or initialize the Whisper model."""
     global model
     if model is None:
-        model = whisper.load_model("large")
+        print("Loading Whisper large model...")
+        model = whisper.load_model("large").to(DEVICE)
+        print("Model loaded successfully")
     return model
 
 def transcribe_audio(audio_file):
@@ -40,7 +47,7 @@ def transcribe_audio(audio_file):
     
     try:
         # Use Whisper to transcribe the audio from the temporary file
-        result = get_model().transcribe(tmp_path)
+        result = get_model().transcribe(tmp_path, fp16=torch.cuda.is_available())  # Enable fp16 if using GPU
         transcript = result.get("text", "")
     except Exception as e:
         raise Exception(f"Error during transcription: {e}")

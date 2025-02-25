@@ -12,6 +12,14 @@ from adventure_art.server import environment_store
 # Set the OpenAI API key
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
+# This will be imported from app.py to avoid circular imports
+emit_environment_update = None
+
+def set_emit_callback(callback_function):
+    """Set the callback function for emitting environment updates."""
+    global emit_environment_update
+    emit_environment_update = callback_function
+
 def analyze_transcript(transcript):
     """
     Analyzes a transcript to determine if the environment description needs to be updated.
@@ -81,6 +89,11 @@ def analyze_transcript(transcript):
             print("Updating environment description")
             # Update the environment store
             environment_store.update_environment(analysis_result)
+            
+            # Emit the update via socket if the callback is set
+            if emit_environment_update:
+                emit_environment_update(analysis_result)
+                
             return analysis_result
             
     except Exception as e:

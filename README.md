@@ -23,12 +23,9 @@ This project provides a real-time pipeline to capture live audio from a Dungeons
 
 ```
 project/
-├── assets/
-│   ├── preview.png        # Live scene interface preview
-│   └── preview2.png       # Character management interface preview
 ├── client/
 │   └── recorder.py        # Captures audio from your laptop and sends chunks to the server
-├── server/
+├── adventure_art/server/
 │   ├── app.py             # Main Flask & Socket.IO application
 │   ├── config.py          # Central configuration settings
 │   ├── transcribe.py      # Transcribes audio using the local Whisper model
@@ -52,8 +49,8 @@ project/
 1. **Clone the Repository:**
 
    ```bash
-   git clone https://github.com/yourusername/dd-live-scene.git
-   cd dd-live-scene
+   git clone https://github.com/millelog/adventure-art.git
+   cd adventure-art
    ```
 
 2. **Create a Virtual Environment and Install Dependencies:**
@@ -88,16 +85,19 @@ Copy the `.env.example` file to `.env` and update the following environment vari
 - `FLASK_ENV`: Set to 'development' or 'production'
 - `DEBUG`: Set to 'True' for development, 'False' for production
 
-### Audio Recording Settings
-- `CHUNK_DURATION`: Duration of each audio chunk in seconds (default: 60)
-- `SAMPLE_RATE`: Audio sample rate in Hz (default: 44100)
-- `CHANNELS`: Number of audio channels (default: 1)
-
 ### Data Storage
 - `CHARACTER_DATA_PATH`: Path to store character data and cached images
 - `ENVIRONMENT_DATA_PATH`: Path to store environment state data (defaults to CHARACTER_DATA_PATH)
 
 All these settings can also be modified directly in `server/config.py` if preferred.
+
+### Recording Settings
+
+To change the recording settings, modify the following variables in `client/recorder.py`:
+
+- `CHUNK_DURATION`: Duration of each audio chunk in seconds (default: 120)
+- `SAMPLE_RATE`: Audio sample rate in Hz (default: 44100)
+- `CHANNELS`: Number of audio channels (default: 1)
 
 ## Usage
 

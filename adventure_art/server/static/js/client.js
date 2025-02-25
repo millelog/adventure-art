@@ -18,6 +18,20 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Received invalid image data:", data);
       }
     });
+    
+    // Listen for environment updates from the server
+    socket.on('environment_update', function(data) {
+      console.log("Received environment update:", data);
+      if (data && data.description) {
+        // Update the environment description in the UI
+        const descriptionElement = document.getElementById('environment-description');
+        if (descriptionElement) {
+          descriptionElement.value = data.description;
+        }
+      } else {
+        console.error("Received invalid environment data:", data);
+      }
+    });
   
     // Add keyboard event listener for fullscreen toggle
     document.addEventListener('keydown', function(e) {
