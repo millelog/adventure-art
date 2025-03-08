@@ -1,5 +1,6 @@
 /.env
 /dnd_sample/*.wav
+adventure_art/server/session_history/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

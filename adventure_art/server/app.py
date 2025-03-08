@@ -15,6 +15,8 @@ import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import datetime
+from flask import make_response
 
 # Load .env file from project root
 dotenv_path = Path(__file__).resolve().parent.parent.parent / '.env'
@@ -349,13 +351,63 @@ def view_sessions():
     """Render the sessions history view page."""
     return render_template('sessions.html')
 
-if __name__ == '__main__':
-    # Start a new session
+@app.route('/sessions/<session_id>/download/transcripts')
+def download_transcripts(session_id):
+    """Download all transcripts from a session as a text file."""
     try:
-        session_id = session_history.start_new_session()
-        print(f"Started new session: {session_id}")
+        session = session_history.get_session_by_id(session_id)
+        if not session:
+            return "Session not found", 404
+        
+        # Extract all transcripts from scene events
+        transcripts = []
+        for event in session['events']:
+            if event['type'] == 'scene' and 'transcript' in event:
+                timestamp = datetime.fromisoformat(event['timestamp']).strftime("%Y-%m-%d %H:%M:%S")
+                transcripts.append(f"[{timestamp}]\n{event['transcript']}\n\n")
+        
+        # Join all transcripts into a single text file
+        all_transcripts = "".join(transcripts)
+        
+        # Create a response with the text file
+        response = make_response(all_transcripts)
+        response.headers["Content-Disposition"] = f"attachment; filename=transcripts_{session_id}.txt"
+        response.headers["Content-Type"] = "text/plain"
+        return response
     except Exception as e:
-        print(f"Error starting session: {e}")
+        print(f"Error downloading transcripts: {e}")
+        return "Error generating transcript file", 500
+
+@app.route('/sessions/<session_id>/download/scene_descriptions')
+def download_scene_descriptions(session_id):
+    """Download all scene descriptions from a session as a text file."""
+    try:
+        session = session_history.get_session_by_id(session_id)
+        if not session:
+            return "Session not found", 404
+        
+        # Extract all scene descriptions from scene events
+        descriptions = []
+        for event in session['events']:
+            if event['type'] == 'scene' and 'prompt' in event:
+                timestamp = datetime.fromisoformat(event['timestamp']).strftime("%Y-%m-%d %H:%M:%S")
+                descriptions.append(f"[{timestamp}]\n{event['prompt']}\n\n")
+        
+        # Join all descriptions into a single text file
+        all_descriptions = "".join(descriptions)
+        
+        # Create a response with the text file
+        response = make_response(all_descriptions)
+        response.headers["Content-Disposition"] = f"attachment; filename=scene_descriptions_{session_id}.txt"
+        response.headers["Content-Type"] = "text/plain"
+        return response
+    except Exception as e:
+        print(f"Error downloading scene descriptions: {e}")
+        return "Error generating scene descriptions file", 500
+
+if __name__ == '__main__':
+    # We don't need to start a new session here as it will be created when needed
+    # The session_history.init() call earlier already initializes the module
     
     # Run the Flask app
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)

@@ -280,6 +280,36 @@
             color: var(--error);
         }
 
+        /* Download buttons */
+        .download-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .download-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .download-button:hover {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .download-button svg {
+            margin-right: 8px;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -315,6 +345,22 @@
         <div id="session-detail-view" style="display: none;">
             <button class="back-button" id="back-button">← Back to All Sessions</button>
             <h2 id="session-title">Session Details</h2>
+            
+            <div class="download-buttons">
+                <a href="#" id="download-transcripts" class="download-button" target="_blank">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 16L12 8M12 16L9 13M12 16L15 13M19 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H19C20.1046 3 21 3.89543 21 5V19C21 20.1046 20.1046 21 19 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Download All Transcripts
+                </a>
+                <a href="#" id="download-scene-descriptions" class="download-button" target="_blank">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 16L12 8M12 16L9 13M12 16L15 13M19 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H19C20.1046 3 21 3.89543 21 5V19C21 20.1046 20.1046 21 19 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Download All Scene Descriptions
+                </a>
+            </div>
+            
             <div id="session-events"></div>
         </div>
     </div>
@@ -400,6 +446,10 @@
                     const date = new Date(session.start_time);
                     document.getElementById('session-title').textContent = 
                         `Session: ${session.session_id.split('_')[0]} (${date.toLocaleString()})`;
+                    
+                    // Update download links
+                    document.getElementById('download-transcripts').href = `/sessions/${session.session_id}/download/transcripts`;
+                    document.getElementById('download-scene-descriptions').href = `/sessions/${session.session_id}/download/scene_descriptions`;
                     
                     // Clear previous events
                     const eventsContainer = document.getElementById('session-events');
