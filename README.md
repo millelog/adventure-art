@@ -8,6 +8,12 @@ This project provides a real-time pipeline to capture live audio from a Dungeons
 ![Character Management](assets/preview2.png)
 *Character management interface for maintaining consistent descriptions*
 
+![Session History](assets/preview3.png)
+*Session history view with downloadable transcripts and scene descriptions*
+
+![Environment Management](assets/preview4.png)
+*Environment management interface for tracking and updating game settings*
+
 ## Features
 
 - **Live Audio Processing**: Captures and processes audio in real-time from your D&D session
