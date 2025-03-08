@@ -20,6 +20,7 @@ This project provides a real-time pipeline to capture live audio from a Dungeons
 - **Fullscreen Mode**: Toggle fullscreen view with 'F' key or button
 - **Character Management**: Simple interface to add, edit, and delete character descriptions
 - **Scene Context Reset**: Option to clear previous scene context when needed
+- **Session History**: Archive and browse past sessions with downloadable transcripts and scene descriptions
 
 ## Project Structure
 
@@ -37,8 +38,10 @@ project/
 │   ├── environment_store.py # File-based environment state management
 │   ├── environment_analyzer.py # Analyzes transcripts for environment changes
 │   ├── image_cache.py     # Manages caching of generated images
+│   ├── session_history.py # Records and manages session history data
 │   ├── templates/
-│   │   └── index.html     # Web dashboard template
+│   │   ├── index.html     # Web dashboard template
+│   │   └── sessions.html  # Session history viewer template
 │   └── static/
 │       └── js/
 │           └── client.js  # Client-side JS for live updates
@@ -167,6 +170,27 @@ The scene continuity system helps maintain visual consistency between consecutiv
 - **Bidirectional Influence**: Previous scenes influence both environment analysis and scene composition
 
 This approach creates a more coherent visual narrative throughout your D&D session, even as the action and focus change.
+
+### Session History
+
+The session history system automatically records and organizes your D&D sessions:
+
+- **Automatic Session Tracking**: The system creates a new session when the server starts or when needed
+- **Scene Archiving**: Each generated scene is saved with its transcript, description, and image
+- **Browsable History**: Access past sessions through the Session History interface
+- **Downloadable Content**: Download all transcripts or scene descriptions from a session as text files
+- **Chronological Organization**: Sessions and scenes are organized by date and time
+- **Image Viewer**: View full-size scene images with a click
+- **Expandable Details**: Toggle between compact and expanded views of transcripts and scene descriptions
+
+To access session history:
+1. Navigate to the "Session History" tab in the web interface
+2. Browse through past sessions
+3. Click on a session to view all scenes from that session
+4. Use the download buttons to save transcripts or scene descriptions as text files
+5. Click on any image to view it in full size
+
+This feature helps you maintain a record of your campaign's key moments and provides valuable reference material for future sessions.
 
 ## License
 
