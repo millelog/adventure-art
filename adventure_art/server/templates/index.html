@@ -379,6 +379,11 @@
       background-color: var(--bg-primary);
       border-radius: 6px;
     }
+
+    .sessions-link {
+      text-decoration: none;
+      margin-left: auto;
+    }
   </style>
 </head>
 <body>
@@ -386,9 +391,11 @@
     <h1>D&D Live Scene</h1>
     
     <div class="nav-tabs">
-      <div class="nav-tab active" data-tab="scene">Live Scene</div>
+      <div class="nav-tab active" data-tab="scene">Scene</div>
+      <div class="nav-tab" data-tab="characters">Characters</div>
       <div class="nav-tab" data-tab="environment">Environment</div>
-      <div class="nav-tab" data-tab="characters">Character Management</div>
+      <div class="nav-tab" data-tab="audio">Audio</div>
+      <a href="{{ sessions_url }}" class="nav-tab sessions-link">Session History</a>
     </div>
     
     <div id="scene-tab" class="tab-content active">

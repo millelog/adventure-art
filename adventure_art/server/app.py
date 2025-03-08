@@ -8,6 +8,7 @@ Main server application that:
 - Processes audio: transcription → environment analysis → scene composition → image generation.
 - Pushes the newly generated image to connected clients using SocketIO.
 - Manages character and environment data through a RESTful API.
+- Tracks session history including transcripts, prompts, and images.
 """
 
 import os
@@ -32,63 +33,70 @@ from adventure_art.server import image_generator
 from adventure_art.server import character_store
 from adventure_art.server import environment_store
 from adventure_art.server import image_cache
+from adventure_art.server import session_history
 from adventure_art.server import scene_store
 
+# Create Flask app and SocketIO instance
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')  # Get from .env
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Set up the emit callback for environment_analyzer
-environment_analyzer.set_emit_callback(lambda description: emit_environment_update(description))
+# Temporary storage for the current transcript
+current_transcript = None
+
+# Ensure the necessary directories exist
+os.makedirs('uploads', exist_ok=True)
+os.makedirs('character_images', exist_ok=True)
+os.makedirs('scene_images', exist_ok=True)
+
+# Initialize the session history
+session_history.init()
 
 @socketio.on('connect')
 def handle_connect():
     """Handle client connection."""
-    print("Client connected")
-    # Send the latest cached image if available
-    latest_image = get_latest_cached_image()
-    if latest_image:
-        socketio.emit('new_image', {'image_url': f'/scene_images/{latest_image}'})
+    print('Client connected')
     
-    # Send the current environment description
+    # Send the current environment to the client
     try:
-        current_environment = environment_store.get_environment()
-        socketio.emit('environment_update', {'description': current_environment.get('description', '')})
+        environment = environment_store.get_environment()
+        if environment:
+            socketio.emit('environment_update', {'description': environment.get('description', '')})
     except Exception as e:
         print(f"Error sending environment on connect: {e}")
-        
-    # Send the last scene prompt
+    
+    # Send the latest cached image to the client
     try:
-        last_prompt = scene_store.get_last_prompt()
-        if last_prompt:
-            socketio.emit('scene_prompt_update', {'prompt': last_prompt})
+        latest_image = get_latest_cached_image()
+        if latest_image:
+            socketio.emit('new_image', {'image_url': latest_image})
     except Exception as e:
-        print(f"Error sending last scene prompt on connect: {e}")
+        print(f"Error sending latest image on connect: {e}")
 
 def get_latest_cached_image():
-    """Get the filename of the most recent cached image."""
+    """Get the URL of the latest cached image."""
     try:
-        files = sorted(Path(image_cache.CACHE_DIR).glob('scene_*.png'))
+        # Get all PNG files in the cache directory
+        cache_dir = Path(image_cache.CACHE_DIR)
+        files = sorted(list(cache_dir.glob('scene_*.png')), key=lambda x: x.stat().st_mtime)
         if files:
-            return files[-1].name
+            latest_filename = files[-1].name
+            return f'/scene_images/{latest_filename}'
     except Exception as e:
         print(f"Error getting latest cached image: {e}")
     return None
 
 @socketio.on('new_image')
 def handle_new_image(data):
-    """Handle new image event and broadcast it to all clients."""
-    print("Received new image:", data)
-    # Broadcast the image URL to all clients (including sender)
-    socketio.emit('image_update', data)
+    """Handle new image event from client."""
+    print('New image received:', data)
+    # This event is for future use, currently images are pushed from the server
 
 @app.route('/')
 def index():
-    """Render the main display page."""
-    return render_template('index.html')
+    """Serve the main application page."""
+    sessions_url = '/sessions/view'
+    return render_template('index.html', sessions_url=sessions_url)
 
-# Character Management Routes
 @app.route('/characters', methods=['GET'])
 def get_characters():
     """Get all characters."""
@@ -96,94 +104,94 @@ def get_characters():
         characters = character_store.get_all_characters()
         return jsonify(characters)
     except Exception as e:
-        print("Error getting characters:", e)
-        return jsonify({"error": str(e)}), 500
+        print(f"Error getting characters: {e}")
+        return "Error getting characters", 500
 
 @app.route('/characters/<character_id>', methods=['GET'])
 def get_character(character_id):
     """Get a specific character by ID."""
     try:
         character = character_store.get_character(character_id)
-        if character is None:
-            return jsonify({"error": "Character not found"}), 404
-        return jsonify(character)
+        if character:
+            return jsonify(character)
+        else:
+            return "Character not found", 404
     except Exception as e:
-        print("Error getting character:", e)
-        return jsonify({"error": str(e)}), 500
+        print(f"Error getting character: {e}")
+        return "Error getting character", 500
 
 @app.route('/characters/<character_id>', methods=['POST'])
 def save_character(character_id):
-    """Add or update a character."""
+    """Save or update a character."""
     try:
-        data = request.get_json()
+        data = request.json
         if not data:
-            return jsonify({"error": "No data provided"}), 400
+            return "Missing character data", 400
+        
+        name = data.get('name', '')
+        description = data.get('description', '')
+        
+        if not name or not description:
+            return "Name and description are required", 400
         
         character_data = {
-            "name": data.get("name"),
-            "description": data.get("description")
+            "name": name,
+            "description": description
         }
         
-        if not character_data["name"] or not character_data["description"]:
-            return jsonify({"error": "Name and description are required"}), 400
-        
-        updated_characters = character_store.add_or_update_character(character_id, character_data)
-        return jsonify(updated_characters)
-            
+        character_store.add_or_update_character(character_id, character_data)
+        return "Character saved", 200
     except Exception as e:
-        print("Error saving character:", e)
-        return jsonify({"error": str(e)}), 500
+        print(f"Error saving character: {e}")
+        traceback.print_exc()
+        return "Error saving character", 500
 
 @app.route('/characters/<character_id>', methods=['DELETE'])
 def delete_character(character_id):
     """Delete a character."""
     try:
-        if character_store.remove_character(character_id):
-            return jsonify({"message": "Character deleted successfully"})
-        return jsonify({"error": "Character not found"}), 404
+        character_store.remove_character(character_id)
+        return "Character deleted", 200
     except Exception as e:
-        print("Error deleting character:", e)
-        return jsonify({"error": str(e)}), 500
+        print(f"Error deleting character: {e}")
+        return "Error deleting character", 500
 
-# Environment Management Routes
 @app.route('/environment', methods=['GET'])
 def get_environment():
-    """Get current environment data."""
+    """Get the current environment description."""
     try:
         environment = environment_store.get_environment()
         return jsonify(environment)
     except Exception as e:
-        print("Error getting environment:", e)
-        return jsonify({"error": str(e)}), 500
+        print(f"Error getting environment: {e}")
+        return "Error getting environment", 500
 
 @app.route('/environment', methods=['POST'])
 def save_environment():
-    """Update the environment description and lock status."""
+    """Save the environment description."""
     try:
-        data = request.get_json()
+        data = request.json
         if not data:
-            return jsonify({"error": "No data provided"}), 400
+            return "Missing environment data", 400
         
-        description = data.get("description")
-        locked = data.get("locked")
+        description = data.get('description', '')
+        locked = data.get('locked', False)
         
-        if description is None:
-            return jsonify({"error": "Description is required"}), 400
-        
-        updated_environment = environment_store.update_environment(description, locked)
+        environment_store.update_environment(description, locked)
         
         # Emit the environment update to all connected clients
         emit_environment_update(description)
         
-        return jsonify(updated_environment)
-            
+        return "Environment saved", 200
     except Exception as e:
-        print("Error saving environment:", e)
-        return jsonify({"error": str(e)}), 500
+        print(f"Error saving environment: {e}")
+        return "Error saving environment", 500
 
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():
     """Endpoint for receiving audio chunks from the client recorder."""
+    global current_transcript
+    
     if 'audio' not in request.files:
         return "Missing audio file", 400
 
@@ -196,6 +204,9 @@ def upload_audio():
         try:
             transcript = transcribe.transcribe_audio(audio_file)
             print("Transcript:", transcript)
+            
+            # Store the transcript for later use in session history
+            current_transcript = transcript
         except Exception as e:
             print(f"Error during transcription: {e}")
             return "Transcription failed", 500
@@ -230,70 +241,121 @@ def upload_audio():
                 cached_url = f'/scene_images/{cached_filename}'
                 print("Emitting new image URL:", cached_url)
                 socketio.emit('new_image', {'image_url': cached_url})
+                
+                # Add combined event to session history
+                try:
+                    cached_path = image_cache.get_cached_image_path(cached_filename)
+                    session_history.add_scene_event(current_transcript, scene_description, cached_path)
+                except Exception as e:
+                    print(f"Warning: Could not add scene to session history: {e}")
+                
                 return "Audio processed successfully", 200
             else:
-                print("Failed to cache the image")
-                return "Image caching failed", 500
+                return "Failed to cache image", 500
         else:
-            print("Image generation failed")
-            return "Image generation failed", 200
-
+            return "Failed to generate image", 500
     except Exception as e:
-        print("Error processing audio chunk:", e)
+        print(f"Error processing audio: {e}")
         traceback.print_exc()
-        return "Internal Server Error", 500
+        return "Error processing audio", 500
 
-# Scene Prompt Management Routes
 @app.route('/scene_prompt', methods=['GET'])
 def get_scene_prompt():
-    """Get the last scene prompt."""
+    """Get the current scene prompt."""
     try:
-        last_prompt = scene_store.get_last_prompt()
-        return jsonify({"prompt": last_prompt})
+        prompt = scene_store.get_last_prompt()
+        return jsonify({"prompt": prompt})
     except Exception as e:
-        print("Error getting scene prompt:", e)
-        return jsonify({"error": str(e)}), 500
+        print(f"Error getting scene prompt: {e}")
+        return "Error getting scene prompt", 500
 
 @app.route('/scene_prompt', methods=['DELETE'])
 def clear_scene_prompt():
-    """Clear the last scene prompt."""
+    """Clear the current scene prompt."""
     try:
         scene_store.update_last_prompt("")
-        socketio.emit('scene_prompt_update', {'prompt': ""})
-        return jsonify({"success": True, "message": "Scene prompt cleared successfully"})
+        return "Scene prompt cleared", 200
     except Exception as e:
-        print("Error clearing scene prompt:", e)
-        return jsonify({"error": str(e)}), 500
+        print(f"Error clearing scene prompt: {e}")
+        return "Error clearing scene prompt", 500
 
-# Add route to serve character images
 @app.route('/character_images/<path:filename>')
 def serve_character_image(filename):
-    """Serve character images from the images directory."""
+    """Serve character images."""
     try:
-        return send_from_directory(character_store.IMAGES_DIR, filename)
+        return send_from_directory('character_images', filename)
     except Exception as e:
-        print(f"Error serving character image {filename}: {e}")
+        print(f"Error serving character image: {e}")
         return "Image not found", 404
 
-# Add route to serve cached scene images
 @app.route('/scene_images/<path:filename>')
 def serve_scene_image(filename):
-    """Serve scene images from the cache directory."""
+    """Serve scene images."""
     try:
         return send_from_directory(image_cache.CACHE_DIR, filename)
     except Exception as e:
-        print(f"Error serving scene image {filename}: {e}")
+        print(f"Error serving scene image: {e}")
         return "Image not found", 404
 
 def emit_environment_update(description):
-    """Emit environment update to all connected clients."""
+    """Emit an environment update to all connected clients."""
     try:
         socketio.emit('environment_update', {'description': description})
-        print("Emitted environment update via socket")
     except Exception as e:
         print(f"Error emitting environment update: {e}")
 
+# Add new routes for session history
+@app.route('/sessions', methods=['GET'])
+def get_sessions():
+    """Get a list of all sessions."""
+    sessions = session_history.get_all_sessions()
+    return jsonify(sessions)
+
+@app.route('/sessions/<session_id>', methods=['GET'])
+def get_session(session_id):
+    """Get a specific session by ID."""
+    session = session_history.get_session_by_id(session_id)
+    if session:
+        return jsonify(session)
+    else:
+        return "Session not found", 404
+
+@app.route('/sessions/current', methods=['GET'])
+def get_current_session():
+    """Get the current session."""
+    session_id = session_history.get_current_session_id()
+    session = session_history.get_session_by_id(session_id)
+    return jsonify(session)
+
+@app.route('/session_history/images/<path:filename>')
+def serve_session_image(filename):
+    """Serve images from the session history directory."""
+    try:
+        # Handle both direct filenames and paths with session IDs
+        path_parts = filename.split('/')
+        if len(path_parts) >= 2:
+            session_id = path_parts[0]
+            image_name = path_parts[1]
+            return send_from_directory(str(session_history.HISTORY_IMAGES_DIR / session_id), image_name)
+        else:
+            # If it's just a filename, try to serve it directly
+            return send_from_directory(str(session_history.HISTORY_IMAGES_DIR), filename)
+    except Exception as e:
+        print(f"Error serving session image: {e}")
+        return "Image not found", 404
+
+@app.route('/sessions/view')
+def view_sessions():
+    """Render the sessions history view page."""
+    return render_template('sessions.html')
+
 if __name__ == '__main__':
-    # Run the Flask-SocketIO app.
-    # In production, remove debug=True and configure host/port as needed.
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    # Start a new session
+    try:
+        session_id = session_history.start_new_session()
+        print(f"Started new session: {session_id}")
+    except Exception as e:
+        print(f"Error starting session: {e}")
+    
+    # Run the Flask app
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)

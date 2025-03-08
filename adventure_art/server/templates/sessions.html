@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adventure Art - Session History</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --accent: #6d28d9;
+            --accent-hover: #7c3aed;
+            --border: #404040;
+            --error: #ef4444;
+            --success: #10b981;
+            --transcript-color: #3498db;
+            --prompt-color: #2ecc71;
+            --image-color: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1, h2, h3 {
+            color: var(--text-primary);
+        }
+
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+            background-color: var(--bg-secondary);
+            border-radius: 8px 8px 0 0;
+            padding: 0 10px;
+        }
+
+        .nav-tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            margin-bottom: -1px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            border-radius: 8px 8px 0 0;
+            text-decoration: none;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-tab.active {
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-bottom-color: var(--bg-primary);
+            background-color: var(--bg-primary);
+        }
+
+        /* Session list styles */
+        .session-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .session-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .session-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .session-card h3 {
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .session-card p {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        /* Session detail styles */
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: var(--accent);
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .back-button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .scene-card {
+            margin-bottom: 30px;
+            border-radius: 8px;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .scene-image {
+            width: 100%;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .scene-image:hover {
+            transform: scale(1.01);
+        }
+
+        .scene-content {
+            padding: 20px;
+        }
+
+        .scene-timestamp {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+
+        .scene-details {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .detail-section {
+            border-radius: 6px;
+            padding: 15px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+        }
+
+        .detail-section h4 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .detail-section .indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .transcript-section .indicator {
+            background-color: var(--transcript-color);
+        }
+
+        .prompt-section .indicator {
+            background-color: var(--prompt-color);
+        }
+
+        .detail-content {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding-top 0.3s ease;
+        }
+
+        .detail-content.expanded {
+            max-height: 500px;
+            padding-top: 10px;
+        }
+
+        .toggle-icon {
+            margin-left: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Fullscreen image modal */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Loading and error states */
+        .loading, .no-sessions, .error {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .error {
+            color: var(--error);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .session-list {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-tab {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Adventure Art - Session History</h1>
+        
+        <div class="nav-tabs">
+            <a href="/" class="nav-tab">Home</a>
+            <div class="nav-tab active">Session History</div>
+        </div>
+        
+        <div id="sessions-view">
+            <h2>All Sessions</h2>
+            <div id="session-list" class="session-list">
+                <div class="loading">Loading sessions...</div>
+            </div>
+        </div>
+        
+        <div id="session-detail-view" style="display: none;">
+            <button class="back-button" id="back-button">← Back to All Sessions</button>
+            <h2 id="session-title">Session Details</h2>
+            <div id="session-events"></div>
+        </div>
+    </div>
+
+    <!-- Fullscreen image modal -->
+    <div id="image-modal" class="image-modal">
+        <span class="close-modal" id="close-modal">&times;</span>
+        <img id="modal-image" class="modal-content">
+    </div>
+
+    <script>
+        // Fetch all sessions when the page loads
+        document.addEventListener('DOMContentLoaded', fetchSessions);
+        
+        // Add event listener for back button
+        document.getElementById('back-button').addEventListener('click', function(e) {
+            e.preventDefault();
+            showSessionsView();
+        });
+        
+        // Modal handling
+        const modal = document.getElementById('image-modal');
+        const modalImg = document.getElementById('modal-image');
+        const closeModal = document.getElementById('close-modal');
+        
+        closeModal.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+        
+        // Close modal when clicking outside the image
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        
+        function fetchSessions() {
+            fetch('/sessions')
+                .then(response => response.json())
+                .then(sessions => {
+                    const sessionList = document.getElementById('session-list');
+                    sessionList.innerHTML = '';
+                    
+                    if (sessions.length === 0) {
+                        sessionList.innerHTML = '<div class="no-sessions">No sessions found</div>';
+                        return;
+                    }
+                    
+                    sessions.forEach(session => {
+                        const sessionCard = document.createElement('div');
+                        sessionCard.className = 'session-card';
+                        sessionCard.dataset.id = session.session_id;
+                        
+                        // Format the date
+                        const date = new Date(session.start_time);
+                        const formattedDate = date.toLocaleString();
+                        
+                        sessionCard.innerHTML = `
+                            <h3>Session ${session.session_id.split('_')[0]}</h3>
+                            <p><strong>Started:</strong> ${formattedDate}</p>
+                            <p><strong>Scenes:</strong> ${session.event_count}</p>
+                        `;
+                        
+                        sessionCard.addEventListener('click', function() {
+                            fetchSessionDetail(session.session_id);
+                        });
+                        
+                        sessionList.appendChild(sessionCard);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching sessions:', error);
+                    document.getElementById('session-list').innerHTML = 
+                        '<div class="error">Error loading sessions. Please try again later.</div>';
+                });
+        }
+        
+        function fetchSessionDetail(sessionId) {
+            fetch(`/sessions/${sessionId}`)
+                .then(response => response.json())
+                .then(session => {
+                    // Update the session title
+                    const date = new Date(session.start_time);
+                    document.getElementById('session-title').textContent = 
+                        `Session: ${session.session_id.split('_')[0]} (${date.toLocaleString()})`;
+                    
+                    // Clear previous events
+                    const eventsContainer = document.getElementById('session-events');
+                    eventsContainer.innerHTML = '';
+                    
+                    // Add each scene event
+                    session.events.forEach(event => {
+                        if (event.type === 'scene') {
+                            const sceneCard = document.createElement('div');
+                            sceneCard.className = 'scene-card';
+                            
+                            // Format timestamp
+                            const timestamp = new Date(event.timestamp).toLocaleString();
+                            
+                            // Create the image section
+                            const imageHtml = `
+                                <img src="/${event.image_path}" alt="Generated scene" 
+                                     class="scene-image" onclick="openImageModal(this.src)">
+                            `;
+                            
+                            // Create the content section
+                            const contentHtml = `
+                                <div class="scene-content">
+                                    <div class="scene-timestamp">${timestamp}</div>
+                                    <div class="scene-details">
+                                        <div class="detail-section transcript-section">
+                                            <h4 onclick="toggleDetailContent(this.parentNode.querySelector('.detail-content'))">
+                                                <span class="indicator"></span>
+                                                Transcript
+                                                <span class="toggle-icon">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </span>
+                                            </h4>
+                                            <div class="detail-content">${event.transcript}</div>
+                                        </div>
+                                        
+                                        <div class="detail-section prompt-section">
+                                            <h4 onclick="toggleDetailContent(this.parentNode.querySelector('.detail-content'))">
+                                                <span class="indicator"></span>
+                                                Scene Description
+                                                <span class="toggle-icon">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    </svg>
+                                                </span>
+                                            </h4>
+                                            <div class="detail-content">${event.prompt}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            
+                            sceneCard.innerHTML = imageHtml + contentHtml;
+                            eventsContainer.appendChild(sceneCard);
+                        }
+                    });
+                    
+                    // Show the session detail view
+                    showSessionDetailView();
+                })
+                .catch(error => {
+                    console.error('Error fetching session details:', error);
+                    alert('Error loading session details. Please try again.');
+                });
+        }
+        
+        function toggleDetailContent(element) {
+            element.classList.toggle('expanded');
+            const header = element.previousElementSibling;
+            header.classList.toggle('expanded');
+        }
+        
+        function openImageModal(src) {
+            modalImg.src = src;
+            modal.style.display = 'flex';
+        }
+        
+        function showSessionsView() {
+            document.getElementById('sessions-view').style.display = 'block';
+            document.getElementById('session-detail-view').style.display = 'none';
+        }
+        
+        function showSessionDetailView() {
+            document.getElementById('sessions-view').style.display = 'none';
+            document.getElementById('session-detail-view').style.display = 'block';
+        }
+    </script>
+</body>
+</html> 

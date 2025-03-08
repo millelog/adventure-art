@@ -1,6 +1,22 @@
 {
-  "torrin_1": {
-    "name": "Torrin Stormweaver",
-    "description": " a muscular icekin warrior with pale blue scaled skin and frost patterns. He has vivid ice-blue eyes and flowing dark purple hair. He wears chainmail armor and carries both a shield and an imposing greatsword. His thick tapering tail is visible behind him."
+  "mala": {
+    "name": "Mala",
+    "description": "A female halfling-sized figure with deep gray skin and piercing yellow eyes. They stand about 3 feet tall with a stout, sturdy build. Their face features a distinctive pinched nose and is framed by curly, light gray hair with streaks of darker yellow. They carry a large pick axe."
+  },
+  "khardak": {
+    "name": "Khardak",
+    "description": "A towering 7-foot Dhagaa warrior with an imposing muscular build, deep bronze skin, and intense sapphire eyes. Khardak wields a massive warhammer crafted from stone and metal, with a small shield strapped to his broad back. Despite his intimidating presence, his calm, contemplative expression reveals his soft-spoken nature."
+  },
+  "meldra": {
+    "name": "Meldra",
+    "description": "A witch with pale purple skin and blue-black hair wearing a wide-brimmed hat with golden knotwork. Her dark purple cloak features gold stars, matching her star pendant and black-gold geometric bodice. A full moon illuminates her solemn face with ethereal blue light against a starry backdrop."
+  },
+  "vogror": {
+    "name": "Vogror",
+    "description": "Olive-skinned explorer with dark side-braid wearing tan leather coat with white fur trim, red neckerchief, and brown boots. Equipped with utility belt and pouches."
+  },
+  "torrin": {
+    "name": "Torrin",
+    "description": " a muscular male icekin warrior with pale blue scaled skin and frost patterns. He has vivid ice-blue eyes and flowing dark purple hair. He wears chainmail armor and carries both a shield and an imposing greatsword. His thick tapering tail is visible behind him."
   }
 }

@@ -9,6 +9,7 @@ character store and composes a prompt for the OpenAI language model.
 import openai
 import re
 import json
+import random  # Add import for randomization
 from adventure_art.server.config import OPENAI_API_KEY
 from adventure_art.server import character_store
 from adventure_art.server import environment_store
@@ -46,16 +47,19 @@ def compose_scene(transcript):
     # Retrieve all character data
     all_characters = character_store.get_all_characters()
     
-    # Format all character details as a string
+    # Format all character details as a list and shuffle it for randomization
     character_details = []
     for char_id, data in all_characters.items():
         char_desc = f"{data.get('name', char_id)}: {data.get('description', 'No description provided')}"
         character_details.append(char_desc)
     
+    # Randomize the order of character details to avoid positional bias
+    random.shuffle(character_details)
+    
     if character_details:
-        character_details = "\n\n".join(character_details)
+        character_details_text = "\n\n".join(character_details)
     else:
-        character_details = "No character data available."
+        character_details_text = "No character data available."
     
     # Get the current environment description
     environment_data = environment_store.get_environment()
@@ -83,9 +87,16 @@ def compose_scene(transcript):
                     "scene_description": {
                         "type": "string",
                         "description": "A concise, focused description of the key event in the scene, optimized for image generation. Should be under 200 words and focus on one key moment or action."
+                    },
+                    "character_names": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "List of character names that appear in the scene description."
                     }
                 },
-                "required": ["scene_description"]
+                "required": ["scene_description", "character_names"]
             }
         }
     ]
@@ -94,7 +105,8 @@ def compose_scene(transcript):
     system_message = (
         "You are a concise D&D scene descriptor focused on clear, imageable moments. "
         "Only include characters that are actually mentioned or implied in the transcript, maintaining consistency with their descriptions "
-        "and ensuring the scene is set within the provided environment. Your output should be structured using the function provided."
+        "and ensuring the scene is set within the provided environment. Your output should be structured using the function provided. "
+        "Always use character names explicitly in your descriptions to maintain character consistency across scenes."
     )
     
     user_message = (
@@ -103,6 +115,8 @@ def compose_scene(transcript):
         "Guidelines:\n"
         "- Focus on ONE key moment or action\n"
         "- Only include characters that are actually mentioned or implied in the transcript\n"
+        "- ALWAYS use character names explicitly in your description, even if they're only implied in the transcript\n"
+        "- If a character is referenced indirectly in the transcript (e.g., 'the wizard'), use their proper name (e.g., 'Gandalf')\n"
         "- Keep descriptions under 200 words\n"
         "- Use clear, specific visual language\n"
         "- Prioritize action and emotion over complex details\n"
@@ -115,11 +129,11 @@ def compose_scene(transcript):
         f"{environment_description}\n\n"
         + (f"{previous_prompt_section}\n\n" if previous_prompt else "")
         + "Available Characters:\n"
-        f"{character_details}\n\n"
+        f"{character_details_text}\n\n"
         "Transcript:\n"
         f"{transcript}\n\n"
         "Generate a concise scene description, only including characters that are relevant to this specific moment and ensuring "
-        "it fits within the described environment."
+        "it fits within the described environment. Always refer to characters by their proper names to maintain consistency."
     )
     
     try:
@@ -141,6 +155,9 @@ def compose_scene(transcript):
         
         # Get the scene description
         scene_description = function_args.get("scene_description", "").strip()
+        
+        # Get the character names (for potential future use)
+        character_names = function_args.get("character_names", [])
         
         if not scene_description:
             print("No valid scene description generated")
