@@ -37,6 +37,7 @@ from adventure_art.server import environment_store
 from adventure_art.server import image_cache
 from adventure_art.server import session_history
 from adventure_art.server import scene_store
+from adventure_art.server import style_store
 
 # Create Flask app and SocketIO instance
 app = Flask(__name__)
@@ -188,6 +189,76 @@ def save_environment():
     except Exception as e:
         print(f"Error saving environment: {e}")
         return "Error saving environment", 500
+
+@app.route('/style', methods=['GET'])
+def get_style():
+    """Get the current style settings."""
+    try:
+        style_data = style_store.get_style()
+        return jsonify(style_data)
+    except Exception as e:
+        print(f"Error getting style: {e}")
+        return "Error getting style", 500
+
+@app.route('/style', methods=['POST'])
+def save_style():
+    """Save the style settings."""
+    try:
+        data = request.json
+        if not data:
+            return "Missing style data", 400
+        
+        # Extract style text from request data
+        style_text = data.get('style_text')
+        
+        if not style_text:
+            return "Style text is required", 400
+        
+        # Update style settings
+        style_store.update_style(style_text=style_text)
+        
+        # Get the resulting style directive for clients
+        style_directive = style_store.get_style_directive()
+        
+        # Emit the style update to all connected clients
+        socketio.emit('style_update', {
+            'style_data': {'style_text': style_text},
+            'style_directive': style_directive
+        })
+        
+        return "Style saved", 200
+    except Exception as e:
+        print(f"Error saving style: {e}")
+        traceback.print_exc()
+        return "Error saving style", 500
+
+@app.route('/style/reset', methods=['POST'])
+def reset_style():
+    """Reset style settings to defaults."""
+    try:
+        # Get default style data (which is loaded when we create a new object)
+        default_style = style_store.load_style_data()
+        
+        # Update style settings with default
+        style_store.update_style(style_text=default_style['style_text'])
+        
+        # Get the resulting style directive
+        style_directive = style_store.get_style_directive()
+        
+        # Emit the style update to all connected clients
+        socketio.emit('style_update', {
+            'style_data': default_style,
+            'style_directive': style_directive
+        })
+        
+        return jsonify({
+            "message": "Style reset to defaults",
+            "style_data": default_style,
+            "style_directive": style_directive
+        })
+    except Exception as e:
+        print(f"Error resetting style: {e}")
+        return "Error resetting style", 500
 
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():

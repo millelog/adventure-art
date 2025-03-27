@@ -14,6 +14,7 @@ from adventure_art.server.config import OPENAI_API_KEY
 from adventure_art.server import character_store
 from adventure_art.server import environment_store
 from adventure_art.server import scene_store
+from adventure_art.server import style_store
 
 # Set the OpenAI API key
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
@@ -76,6 +77,9 @@ def compose_scene(transcript):
             "but focus on the new action or moment described in the current transcript."
         )
     
+    # Get the style directive
+    style_directive = style_store.get_style_directive()
+    
     # Define the function for structured output
     functions = [
         {
@@ -125,6 +129,8 @@ def compose_scene(transcript):
         "- Avoid complex lighting or camera instructions\n"
         "- Make the scene consistent with the current environment description\n"
         f"- {'' if not previous_prompt else 'Maintain visual continuity with the previous scene where appropriate'}\n\n"
+        "Visual Style Guidelines:\n"
+        f"{style_directive}\n\n"
         "Current Environment:\n"
         f"{environment_description}\n\n"
         + (f"{previous_prompt_section}\n\n" if previous_prompt else "")

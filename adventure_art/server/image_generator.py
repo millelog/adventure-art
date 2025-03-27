@@ -40,7 +40,7 @@ def generate_image(scene_description):
     try:
         # Generate image using Imagen 3.0
         response = client.models.generate_images(
-            model='imagen-3.0-generate-002',
+            model='gemini-2.0-flash-exp',
             prompt=scene_description,
             config=types.GenerateImagesConfig(
                 number_of_images=1,

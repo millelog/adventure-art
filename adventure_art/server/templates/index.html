@@ -165,7 +165,7 @@
       display: block;
     }
     
-    .character-form, .environment-form {
+    .character-form, .environment-form, .style-form {
       margin-bottom: 30px;
       padding: 25px;
       border: 1px solid var(--border);
@@ -173,14 +173,17 @@
       background-color: var(--bg-primary);
     }
 
-    .character-form h2, .environment-form h2 {
+    .character-form h2, .environment-form h2, .style-form h2 {
       margin-bottom: 20px;
       color: var(--text-primary);
     }
     
     .character-form input,
     .character-form textarea,
-    .environment-form textarea {
+    .environment-form textarea,
+    .style-form input,
+    .style-form textarea,
+    .style-form select {
       width: 100%;
       margin-bottom: 15px;
       padding: 12px;
@@ -193,7 +196,10 @@
 
     .character-form input:focus,
     .character-form textarea:focus,
-    .environment-form textarea:focus {
+    .environment-form textarea:focus,
+    .style-form input:focus,
+    .style-form textarea:focus,
+    .style-form select:focus {
       outline: none;
       border-color: var(--accent);
     }
@@ -384,6 +390,48 @@
       text-decoration: none;
       margin-left: auto;
     }
+
+    /* Style option grid */
+    .style-option-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .style-option-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .style-preview {
+      background-color: var(--bg-secondary);
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .style-preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .style-preview h3 {
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .style-preview-content {
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+      line-height: 1.6;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -394,6 +442,7 @@
       <div class="nav-tab active" data-tab="scene">Scene</div>
       <div class="nav-tab" data-tab="characters">Characters</div>
       <div class="nav-tab" data-tab="environment">Environment</div>
+      <div class="nav-tab" data-tab="style">Style</div>
       <div class="nav-tab" data-tab="audio">Audio</div>
       <a href="{{ sessions_url }}" class="nav-tab sessions-link">Session History</a>
     </div>
@@ -465,6 +514,39 @@
       <h2>Characters</h2>
       <div id="character-list" class="character-list">
         <!-- Characters will be populated here -->
+      </div>
+    </div>
+
+    <div id="style-tab" class="tab-content">
+      <div class="style-form">
+        <h2>Global Image Style</h2>
+        <p class="style-description">
+          This style directive is added to every scene prompt to guide the AI image generator.
+          It helps maintain a consistent visual style across your adventure.
+        </p>
+        
+        <label class="style-option-label">Style Directive</label>
+        <textarea id="style-text" placeholder="Enter your style directive..." rows="6"></textarea>
+        
+        <button id="save-style">Save Style</button>
+        <button id="reset-style">Reset to Default</button>
+        
+        <div class="style-info">
+          <h3>Tips for Effective Style Directives</h3>
+          <p>
+            Effective style directives should include:
+            <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.4">
+              <li><strong>Art style:</strong> e.g., "oil painting", "anime", "photorealistic", "watercolor", etc.</li>
+              <li><strong>Color palette:</strong> e.g., "vibrant", "muted earth tones", "dark and moody", etc.</li>
+              <li><strong>Lighting:</strong> e.g., "dramatic lighting", "soft diffused light", "golden hour", etc.</li>
+              <li><strong>Composition:</strong> e.g., "cinematic", "balanced", "wide-angle view", etc.</li>
+              <li><strong>Detail level:</strong> e.g., "highly detailed", "simplified", "textured", etc.</li>
+            </ul>
+          </p>
+          <p style="margin-top: 15px">
+            <em>Example:</em> "Art style: fantasy oil painting. Color palette: vibrant and rich. Lighting: dramatic with strong shadows. Composition: balanced and cinematic. Level of detail: high with carefully rendered textures."
+          </p>
+        </div>
       </div>
     </div>
   </div>

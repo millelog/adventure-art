@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
       loadCharacters();
       loadEnvironment();
       loadScenePrompt();
+      loadStyle();
     });
   
     // Listen for new image updates from the server
@@ -45,12 +46,25 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
     
+    // Listen for style updates from the server
+    socket.on('style_update', function(data) {
+      console.log("Received style update:", data);
+      if (data && data.style_data) {
+        displayStyle(data.style_data);
+      } else {
+        console.error("Received invalid style data:", data);
+      }
+    });
+    
     // Set up clear scene prompt button
     const clearScenePromptButton = document.getElementById('clear-scene-prompt');
     if (clearScenePromptButton) {
       clearScenePromptButton.addEventListener('click', clearScenePrompt);
     }
-  
+    
+    // Set up style form functionality
+    initStyleForms();
+
     // Add keyboard event listener for fullscreen toggle
     document.addEventListener('keydown', function(e) {
       // Toggle fullscreen on 'F' key or Escape
@@ -330,4 +344,89 @@ window.toggleFullscreen = toggleFullscreen;
 
 // Make environment functions available globally
 window.saveEnvironment = saveEnvironment;
+
+// Style Management Functions
+async function loadStyle() {
+    try {
+        const response = await fetch('/style');
+        const styleData = await response.json();
+        displayStyle(styleData);
+    } catch (error) {
+        console.error('Error loading style settings:', error);
+    }
+}
+
+function displayStyle(styleData) {
+    // Update style text field with data from server
+    if (!styleData) return;
+
+    const styleTextField = document.getElementById('style-text');
+    if (styleTextField && styleData.style_text) {
+        styleTextField.value = styleData.style_text;
+    }
+}
+
+async function saveStyle() {
+    // Get value from the style text field
+    const styleText = document.getElementById('style-text').value;
+    
+    if (!styleText) {
+        alert('Please provide a style directive');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/style', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                style_text: styleText
+            })
+        });
+        
+        if (response.ok) {
+            console.log('Style saved successfully');
+            // The server will emit a style_update event that will update the UI
+        } else {
+            console.error('Error saving style');
+            alert('Error saving style');
+        }
+    } catch (error) {
+        console.error('Error saving style:', error);
+        alert('Error saving style');
+    }
+}
+
+async function resetStyle() {
+    try {
+        const response = await fetch('/style/reset', {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Style reset successfully');
+            // Update the UI with the reset values
+            displayStyle(data.style_data);
+        } else {
+            console.error('Error resetting style');
+            alert('Error resetting style');
+        }
+    } catch (error) {
+        console.error('Error resetting style:', error);
+        alert('Error resetting style');
+    }
+}
+
+function initStyleForms() {
+    // Add event listeners for the style form buttons
+    document.getElementById('save-style')?.addEventListener('click', saveStyle);
+    document.getElementById('reset-style')?.addEventListener('click', resetStyle);
+}
+
+// Make style functions available globally
+window.saveStyle = saveStyle;
+window.resetStyle = resetStyle;
   
