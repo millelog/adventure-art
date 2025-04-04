@@ -1,22 +1,30 @@
 {
   "mala": {
     "name": "Mala",
-    "description": "A female halfling-sized figure with deep gray skin and piercing yellow eyes. They stand about 3 feet tall with a stout, sturdy build. Their face features a distinctive pinched nose and is framed by curly, light gray hair with streaks of darker yellow. They carry a large pick axe."
+    "description": "A cute middle-aged lady halfing with purple-gray skin, bright yellow eyes, and pointy ears. She stands about 3 feet tall with a stout, sturdy build. Her face features a distinctive pinched nose and is framed by short curly, dark gray hair. She carries a large pick axe."
   },
   "khardak": {
     "name": "Khardak",
-    "description": "A towering 7-foot Dhagaa warrior with an imposing muscular build, deep bronze skin, and intense sapphire eyes. Khardak wields a massive warhammer crafted from stone and metal, with a small shield strapped to his broad back. Despite his intimidating presence, his calm, contemplative expression reveals his soft-spoken nature."
+    "description": "A towering 7-foot Muscular bronze skinned elf warrior with an imposing muscular build, pointed ears,deep bronze shiny skin like polished stone, with angular silver tattoos, and bright blue eyes. Khardak wears chainmail and wields a massive warhammer crafted from stone and metal, with a small shield strapped to his broad back."
   },
   "meldra": {
     "name": "Meldra",
-    "description": "A witch with pale purple skin and blue-black hair wearing a wide-brimmed hat with golden knotwork. Her dark purple cloak features gold stars, matching her star pendant and black-gold geometric bodice. A full moon illuminates her solemn face with ethereal blue light against a starry backdrop."
+    "description": "A pretty Female ethereal humanoid with pale purple skin and blue-black hair. Her skin is almost transluscent. She wears dark studded leather armor, a navy blue hooded cloak, and a glowing gold pendant necklace. She has sparkly, starry eyes. Her translucent skin occasionally shimmers with subtle waves of starlight that radiate outward from her heart, commonly when experiencing heightened emotions."
   },
   "vogror": {
     "name": "Vogror",
-    "description": "Olive-skinned explorer with dark side-braid wearing tan leather coat with white fur trim, red neckerchief, and brown boots. Equipped with utility belt and pouches."
+    "description": "A native american young man, explorer, with a long braid wearing tan leather coat with white fur trim, red neckerchief, and brown boots. Flute strapped around his neck. Equipped with utility belt and pouches."
   },
   "torrin": {
     "name": "Torrin",
-    "description": " a muscular male icekin warrior with pale blue scaled skin and frost patterns. He has vivid ice-blue eyes and flowing dark purple hair. He wears chainmail armor and carries both a shield and an imposing greatsword. His thick tapering tail is visible behind him."
+    "description": "a muscular male icekin warrior with pale blue scales for skin and frost patterns. He has vivid ice-blue eyes, flowing dark purple hair and beard. He wears chainmail armor and carries both a shield and an imposing greatsword. His thick tapering tail is visible behind him."
+  },
+  "ellie": {
+    "name": "Ellie",
+    "description": "A pretty young woman fighter with pale skin and long blonde hair. She wears fancy leather armor and has a rapier."
+  },
+  "tikka": {
+    "name": "Tikka",
+    "description": "A giant horse-sized spikey stone armadillo beast, domesticated. A giant stonelike cute armadillo with whiskers and long rabbit ears. Mala's pet."
   }
 }
